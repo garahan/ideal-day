@@ -563,7 +563,7 @@ let mem = {
   antiProc: [false,false,false,false,false,false,false],
   reviews:{ weekly:{}, monthly:{}, annual:{} },
   onboardDay: 0,
-  healthSync: {},
+  healthSync: { setupDone:false, autoSync:true, lastAutoTrigger:'' },
 };
 let curTab = 'today';
 
@@ -588,7 +588,10 @@ function load(){
       if(!mem.antiProc) mem.antiProc = [false,false,false,false,false,false,false];
       if(!mem.reviews) mem.reviews = { weekly:{}, monthly:{}, annual:{} };
       if(mem.onboardDay===undefined) mem.onboardDay = 0;
-      if(!mem.healthSync) mem.healthSync = {};
+      if(!mem.healthSync) mem.healthSync = { setupDone:false, autoSync:true, lastAutoTrigger:'' };
+      if(mem.healthSync.setupDone===undefined) mem.healthSync.setupDone = false;
+      if(mem.healthSync.autoSync===undefined) mem.healthSync.autoSync = true;
+      if(mem.healthSync.lastAutoTrigger===undefined) mem.healthSync.lastAutoTrigger = '';
       // ensure each block has a domain
       (mem.idealDay.blocks||[]).forEach(b=>{ if(!b.domain) b.domain='meta_time'; });
       // ensure each day has all fields
@@ -995,6 +998,19 @@ function testHealthData(){
   const sample = { steps:8234, sleep:6.4, hrv:42, weight:89.5, restingHR:58, workoutMin:35, activeCal:520, mindfulMin:15, water:1800, lastSync:todayKey() };
   applyHealthData(sample);
   renderAll();
+}
+function confirmHealthSetup(){
+  if(!mem.healthSync) mem.healthSync = {};
+  mem.healthSync.setupDone = !mem.healthSync.setupDone;
+  if(mem.healthSync.setupDone) mem.healthSync.autoSync = true;
+  save();
+  renderSettings();
+}
+function toggleAutoSync(){
+  if(!mem.healthSync) mem.healthSync = {};
+  mem.healthSync.autoSync = !mem.healthSync.autoSync;
+  save();
+  renderSettings();
 }
 
 // ===== RE-ENTRY PROTOCOL =====
@@ -1787,6 +1803,7 @@ function renderSettings(){
 
   // Apple Health sync setup
   html += `<h2 class="sec"><span class="sec-icon">🍎</span>Apple Health sync</h2>`;
+  const hs = mem.healthSync || {};
   html += `<div class="glass hs-setup">
     <h3>How it works</h3>
     <p>An Apple Shortcut reads your HealthKit data (sleep, HRV, steps, workouts, resting HR, active calories, mindful minutes, water, weight) and opens this app with the data as URL parameters. The app auto-fills your metrics and generates health-based suggestions.</p>
@@ -1802,9 +1819,15 @@ function renderSettings(){
       <li>Add <b>Get Health Sample</b> actions for: Steps, Sleep, HRV, Weight, Resting HR, Active Energy, Mindful Minutes, Water</li>
       <li>Add a <b>Get Workouts</b> action and set it to total minutes today</li>
       <li>Add an <b>Open URL</b> action — tap <b>Copy URL template</b> above and paste it in, then replace each number with the matching variable from your Health steps</li>
-      <li>Save and add the Shortcut to your home screen for daily one-tap sync</li>
-      <li>Optional: Set up a <b>Time of Day automation</b> in Shortcuts → Automation → Time of Day → 8:00 AM → Run IdealDayHealthSync. Fully automatic every morning.</li>
+      <li>Save the Shortcut</li>
     </ol>
+    <h3>Enable auto-sync</h3>
+    <p>Once you've created the Shortcut, tap the button below. The app will automatically trigger the sync every morning when you open it — no tapping needed.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="hs-action-btn ${hs.setupDone?'':'primary'}" onclick="confirmHealthSetup()" style="${hs.setupDone?'border-color:rgba(34,197,94,.3);color:var(--green);background:rgba(34,197,94,.08)':'background:linear-gradient(135deg,var(--accent),var(--teal));border:none;color:#0B0F1A;font-weight:700'}">${hs.setupDone?'✓ Shortcut set up — auto-sync active':'I\'ve created the Shortcut — enable auto-sync'}</button>
+    </div>
+    ${hs.setupDone ? `<div class="metric-toggle ${hs.autoSync?'on':''}" onclick="toggleAutoSync()" style="margin-top:8px"><span class="mt-label">🔄 Auto-sync on app open (mornings only)</span><div class="mt-check">✓</div></div>` : ''}
+    <p style="font-size:11px;color:var(--faint);margin-top:10px">Optional: For even more reliability, also set up a <b>Time of Day automation</b> in Shortcuts → Automation → Time of Day → 8:00 AM → Run IdealDayHealthSync. This syncs even if you don't open the app.</p>
   </div>`;
 
   // Friction setup (Part III Phase 0)
@@ -2164,7 +2187,7 @@ function resetData(){
   if(!confirm('Reset ALL data? This cannot be undone.')) return;
   if(!confirm('Really? Everything — ideal day, history, corrections — gone.')) return;
   localStorage.removeItem('idealDay');
-  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0, healthSync:{} };
+  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0, healthSync:{ setupDone:false, autoSync:true, lastAutoTrigger:'' } };
   save();
   renderAll();
 }
@@ -2198,6 +2221,27 @@ if(!mem.onboarded){
   document.getElementById('onboard').classList.add('hide');
 }
 renderAll();
+
+// Auto-trigger health sync on app open (seamless — no tapping)
+// Only if: user has set up the shortcut, autoSync is on, not already synced today,
+// it's before noon, and we haven't already tried auto-triggering today
+if(mem.onboarded && mem.healthSync){
+  const hs = mem.healthSync;
+  const tk = todayKey();
+  const hour = new Date().getHours();
+  const hasHealthInURL = !!healthData;
+  const alreadySyncedToday = hs.lastSync === tk;
+  const alreadyTriggeredToday = hs.lastAutoTrigger === tk;
+  if(hs.setupDone && hs.autoSync && !hasHealthInURL && !alreadySyncedToday && !alreadyTriggeredToday && hour < 12){
+    // mark that we tried, so we don't loop
+    hs.lastAutoTrigger = tk;
+    save();
+    // small delay so the UI renders first
+    setTimeout(()=>{
+      window.location.href = 'shortcuts://run-shortcut?name=IdealDayHealthSync';
+    }, 800);
+  }
+}
 
 // SW
 if('serviceWorker' in navigator){
