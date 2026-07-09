@@ -155,6 +155,7 @@ h2.sec .sec-icon{font-size:13px;}
 .heat .cell.drift{background:rgba(255,94,58,.5);}
 .heat .cell.match{background:var(--green);}
 .heat .cell.empty{background:transparent;}
+.heat .cell.today{outline:2px solid var(--accent);outline-offset:1px;}
 .heat-legend{display:flex;gap:6px;align-items:center;font-size:10px;color:var(--faint);padding:0 16px 4px;font-family:'JetBrains Mono',monospace;}
 .heat-legend .sw{width:10px;height:10px;border-radius:3px;}
 
@@ -410,6 +411,16 @@ h2.sec .sec-icon{font-size:13px;}
 .onboard-day .od-desc{font-size:11px;color:var(--faint);margin-top:2px;}
 .onboard-day.done .od-title{text-decoration:line-through;opacity:.5;}
 
+/* ===== DATE NAVIGATION ===== */
+.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:6px 0;}
+.dn-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;cursor:pointer;flex-shrink:0;transition:all .2s var(--spring);display:flex;align-items:center;justify-content:center;}
+.dn-btn:active{transform:scale(.92);}
+.dn-date{flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.dn-today{padding:6px 14px;border-radius:99px;border:1px solid var(--accent);background:rgba(74,126,255,.1);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;flex-shrink:0;}
+.dn-today:active{transform:scale(.95);}
+.dn-spacer{width:36px;flex-shrink:0;}
+.past-banner{font-size:11px;color:var(--amber);background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.15);border-radius:var(--r-xs);padding:8px 12px;margin-bottom:12px;line-height:1.4;}
+
 /* ===== APPLE HEALTH SYNC ===== */
 .health-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);transition:all .25s;}
 .health-bar.synced{border-color:rgba(34,197,94,.25);background:linear-gradient(135deg,var(--card),rgba(34,197,94,.04));}
@@ -515,7 +526,7 @@ const DEFAULT_IDENTITY = [
   'builds something every day, no matter how small',
 ];
 const MOODS = ['😔','😕','😐','🙂','😄'];
-const GRADUATE_THRESHOLD = 7; // days held before you can graduate a correction
+const GRADUATE_THRESHOLD = 10; // consecutive days held before you can graduate a correction
 const MAX_ACTIVE = 3;
 
 // ===== FOOD DATABASE (per serving, protein in g, kcal) =====
@@ -570,6 +581,7 @@ let mem = {
   startDate: '', // when user started using the app — for cold start detection
 };
 let curTab = 'today';
+let viewDate = ''; // empty = today; otherwise YYYY-MM-DD for past days
 
 // ===== STORAGE =====
 function load(){
@@ -626,8 +638,16 @@ function load(){
 function save(){ localStorage.setItem('idealDay', JSON.stringify(mem)); }
 
 // ===== DATE HELPERS =====
-function todayKey(){ return new Date().toISOString().slice(0,10); }
-function dayKey(d){ return d.toISOString().slice(0,10); }
+function todayKey(){
+  // Use local date, not UTC — otherwise users east of UTC get tomorrow's date in the evening
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dayKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function viewKey(){ return viewDate || todayKey(); }
+function isViewingToday(){ return !viewDate || viewDate === todayKey(); }
 function prettyDate(key){
   const d = new Date(key+'T00:00:00');
   return d.toLocaleDateString('en-US',{ weekday:'short', month:'short', day:'numeric' });
@@ -775,6 +795,12 @@ const LIFE_MODES = {
 };
 function activeMode(){ return LIFE_MODES[mem.lifeMode] || LIFE_MODES.normal; }
 function setLifeMode(mode){
+  if(mode === 'vacation' && mem.lifeMode !== 'vacation'){
+    if(!confirm('Switch to Vacation mode? This pauses all tracking, suggestions, and streaks. You can switch back anytime.')) return;
+  }
+  if(mode === 'crisis' && mem.lifeMode !== 'crisis'){
+    if(!confirm('Switch to Crisis mode? This reduces expectations — only critical items will surface. Sleep is protected, optional domains are dropped.')) return;
+  }
   mem.lifeMode = mode;
   mem.modeSetDate = todayKey();
   save();
@@ -975,6 +1001,34 @@ function computeSuggestions(){
     });
   }
 
+  // 14. HEALTH-BASED SUGGESTIONS (from Apple Health sync, with reasoning)
+  // These go through the same scarcity prioritizer as everything else
+  const hs = mem.healthSync || {};
+  if(hs.lastSync === tk && !isSuppressed('health')){
+    if(hs.sleep!=null && hs.sleep < 6){
+      sugg.push({ ico:'😴', text:`Low sleep (${hs.sleep}h) — do Floor versions today, protect energy`, meta:'Prioritize recovery over intensity', pri:'high', reason:`Flagging because Apple Health reports ${hs.sleep}h sleep last night — below the 6h threshold. Sleep debt is ${(7.5-hs.sleep).toFixed(1)}h.` });
+    } else if(hs.sleep!=null && hs.sleep >= 7.5){
+      sugg.push({ ico:'💪', text:`Great sleep (${hs.sleep}h) — your body is recovered, push hard today`, meta:'Capitalize on good recovery', pri:'low', reason:`Flagging because Apple Health reports ${hs.sleep}h sleep — above 7.5h, your body is primed for intensity` });
+    }
+    if(hs.hrv!=null && hs.hrv < 35){
+      sugg.push({ ico:'📉', text:`HRV ${hs.hrv}ms is low — stress is high, prioritize recovery today`, meta:'Your nervous system is under stress', pri:'high', reason:`Flagging because Apple Health reports HRV of ${hs.hrv}ms — below 35ms is a stress signal. This is a protection signal, not an optimization one.` });
+    } else if(hs.hrv!=null && hs.hrv >= 50){
+      sugg.push({ ico:'📈', text:`HRV ${hs.hrv}ms is strong — go hard on deep work today`, meta:'Your nervous system is ready', pri:'low', reason:`Flagging because Apple Health reports HRV of ${hs.hrv}ms — above 50ms means your body is recovered and ready for intensity` });
+    }
+    if(hs.workoutMin && hs.workoutMin >= 20){
+      sugg.push({ ico:'🏋️', text:`Workout detected: ${hs.workoutMin} min — log your Move block as held`, meta:'Apple Health detected exercise', pri:'high', reason:`Flagging because Apple Health reports ${hs.workoutMin} minutes of workout today — this satisfies your movement block` });
+    }
+    if(hs.steps != null && hs.steps < 3000 && now >= 16*60 && !isSuppressed('health')){
+      sugg.push({ ico:'🚶', text:`Only ${hs.steps} steps — a 15-min walk would clear your head`, meta:'~1500 steps per 15 min walk', pri:'med', reason:`Flagging because Apple Health reports only ${hs.steps} steps and it's after 4pm — low movement is a signal` });
+    }
+    if(hs.restingHR && hs.restingHR > 70){
+      sugg.push({ ico:'❤️', text:`Resting HR ${hs.restingHR} bpm is elevated — consider a lighter day`, meta:'Your body is under stress', pri:'med', reason:`Flagging because Apple Health reports resting HR of ${hs.restingHR} bpm — above 70 suggests incomplete recovery or stress` });
+    }
+    if(hs.water && hs.water < 1500 && now >= 14*60){
+      sugg.push({ ico:'💧', text:`Only ${hs.water}ml water today — drink a glass now`, meta:'Dehydration mimics fatigue', pri:'med', reason:`Flagging because Apple Health reports ${hs.water}ml water intake — below 1500ml by afternoon` });
+    }
+  }
+
   // ===== SCARCITY PRIORITIZER =====
   // The real job isn't "surface everything wrong" — it's "spend today's finite
   // attention on the one or two highest-leverage things and stay silent on the rest."
@@ -1155,6 +1209,7 @@ function fallbackCopy(text){
 function testHealthData(){
   const sample = { steps:8234, sleep:6.4, hrv:42, weight:89.5, restingHR:58, workoutMin:35, activeCal:520, mindfulMin:15, water:1800, lastSync:todayKey() };
   applyHealthData(sample);
+  switchTab('today');
   renderAll();
 }
 function confirmHealthSetup(){
@@ -1235,7 +1290,7 @@ function renderCelebration(d){
   return html;
 }
 function setGratitude(val){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.gratitude = val;
   save();
 }
@@ -1370,12 +1425,14 @@ function metricField(key,label,unit,val,step){
   return `<div class="metric-field"><div class="m-label">${label}</div><input class="m-input" type="number" step="${step}" value="${val||''}" oninput="setMetric('${key}',this.value)" placeholder="0"><span class="m-unit">${unit}</span></div>`;
 }
 function setMetric(key,val){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   if(key==='restorative'||key==='tidyDone'||key==='inboxZero') d[key] = val;
   else if(key==='valuesCheck') d[key] = val;
   else d[key] = parseFloat(val)||0;
   save();
-  if(key==='restorative'||key==='tidyDone'||key==='inboxZero') renderToday();
+  // re-render for button-based inputs (energy, stress, toggles)
+  // but NOT for text/number inputs (would lose focus while typing)
+  if(key==='restorative'||key==='tidyDone'||key==='inboxZero'||key==='energy'||key==='stress') renderToday();
 }
 
 // ===== NUTRITION RENDER =====
@@ -1454,13 +1511,13 @@ function addMeal(){
   const sel = document.getElementById('foodSelect');
   const f = FOODS.find(x=>x.id===sel.value);
   if(!f) return;
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.meals.push({ id:f.id, name:f.name, icon:f.icon, protein:f.protein, kcal:f.kcal });
   save();
   renderToday();
 }
 function removeMeal(i){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.meals.splice(i,1);
   save();
   renderToday();
@@ -1503,7 +1560,7 @@ function renderRoutine(d){
 }
 
 function toggleRoutine(id){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.routineDone[id] = !d.routineDone[id];
   save();
   renderToday();
@@ -1511,10 +1568,27 @@ function toggleRoutine(id){
 
 // ===== TODAY TAB =====
 function renderToday(){
-  const tk = todayKey();
+  const tk = viewKey();
+  const isToday = isViewingToday();
   const d = dayObj(tk);
   const blocks = mem.idealDay.blocks || [];
   let html = '';
+
+  // Date navigation (log past days)
+  html += `<div class="date-nav">`;
+  html += `<button class="dn-btn" onclick="changeViewDate(-1)">‹</button>`;
+  html += `<span class="dn-date">${isToday ? 'Today' : prettyDate(tk)}</span>`;
+  if(!isToday){
+    html += `<button class="dn-btn" onclick="changeViewDate(1)">›</button>`;
+    html += `<button class="dn-today" onclick="resetViewDate()">Today</button>`;
+  } else {
+    html += `<span class="dn-spacer"></span>`;
+  }
+  html += `</div>`;
+
+  if(!isToday){
+    html += `<div class="past-banner">📊 Viewing past day — you can fill in data you missed. Suggestions are hidden for past days.</div>`;
+  }
 
   // Day quality ring
   const heldCount = blocks.filter(b=>d.held[b.id]).length;
@@ -1538,7 +1612,8 @@ function renderToday(){
   </div>`;
 
   // Smart suggestions (rule-based, derived from data — with verdict transparency)
-  const sugg = computeSuggestions();
+  // Only show suggestions for today, not past days
+  const sugg = isToday ? computeSuggestions() : [];
   if(sugg.length){
     html += `<div class="glass sugg">
       <div class="sugg-head"><span class="dot"></span>Smart suggestions${isColdStart()?' · observe mode':''}${activeMode().name!=='Normal'?' · '+activeMode().name+' mode':''}</div>`;
@@ -1555,18 +1630,17 @@ function renderToday(){
     html += `</div>`;
   }
 
-  // Apple Health sync bar + suggestions
-  html += renderHealthSyncBar();
-  html += renderHealthSuggestions();
+  // Apple Health sync bar (suggestions are now integrated into the main engine)
+  if(isToday) html += renderHealthSyncBar();
 
-  // Re-entry protocol (if been away for 3+ days)
-  html += renderReEntry(d);
+  // Re-entry protocol (if been away for 3+ days) — only on today
+  if(isToday) html += renderReEntry(d);
 
   // Celebration / gratitude layer
-  html += renderCelebration(d);
+  if(isToday) html += renderCelebration(d);
 
   // Friction & trigger plans (show if not fully set up, or always collapsible)
-  html += renderFrictionToday();
+  if(isToday) html += renderFrictionToday();
 
   // Ideal day timeline
   html += `<h2 class="sec"><span class="sec-icon">🗓️</span>Your ideal day</h2>`;
@@ -1626,7 +1700,7 @@ function renderToday(){
   }
   const slotsLeft = MAX_ACTIVE - active.length;
   html += `<button class="corr-add" ${slotsLeft<=0?'disabled':''} onclick="openAddCorr()">${slotsLeft<=0?'Queue full — graduate one first':'+ Add correction'}</button>`;
-  html += `<div class="corr-cap">${active.length}/${MAX_ACTIVE} active · graduate after ${GRADUATE_THRESHOLD} days held</div>`;
+  html += `<div class="corr-cap">${active.length}/${MAX_ACTIVE} active · graduate after 10 days held or 80% over 2 weeks</div>`;
 
   // Fuel / nutrition
   html += renderNutrition(d);
@@ -1675,6 +1749,14 @@ function renderHistory(){
   let html = '';
   const tk = todayKey();
 
+  // Cold start banner
+  if(isColdStart()){
+    html += `<div class="glass" style="padding:16px 18px;margin-bottom:14px;border-color:rgba(74,126,255,.2);background:linear-gradient(135deg,rgba(74,126,255,.06),rgba(20,184,166,.03))">
+      <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px">🧊 Quiet observe mode — Day ${daysSinceStart()+1} of 14</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">The system is learning your normal. Data is being collected but not yet judged. Full intelligence activates after 14 days when baselines are real.</div>
+    </div>`;
+  }
+
   // Heatmap
   html += `<h2 class="sec"><span class="sec-icon">🔥</span>Consistency</h2>`;
   html += `<div class="glass" style="padding:0;overflow:hidden">`;
@@ -1687,7 +1769,7 @@ function renderHistory(){
     <span class="sw" style="background:rgba(20,184,166,.75)"></span>
     <span class="sw" style="background:var(--teal)"></span>
     <span>more</span>
-    <span style="margin-left:10px" class="sw" style="background:var(--green)"></span>
+    <span class="sw" style="background:var(--green);margin-left:10px"></span>
     <span style="color:var(--green)">= matched ideal</span>
   </div>`;
   html += `</div>`;
@@ -1718,7 +1800,7 @@ function renderHistory(){
   html += `<h2 class="sec"><span class="sec-icon">🎓</span>Graduated to autopilot</h2>`;
   const graduated = (mem.queue||[]).filter(c=>c.status==='autopilot');
   if(!graduated.length){
-    html += `<div class="glass empty-state"><div class="em">🎓</div>Nothing graduated yet. Hold a correction ${GRADUATE_THRESHOLD} days, then graduate it.</div>`;
+    html += `<div class="glass empty-state"><div class="em">🎓</div>Nothing graduated yet. Hold a correction 10 days (or 80% over 2 weeks), then graduate it.</div>`;
   } else {
     html += `<div class="glass" style="padding:0;overflow:hidden">`;
     graduated.forEach(c=>{
@@ -1844,12 +1926,14 @@ function renderReviews(){
 
   return html;
 }
+let reviewDebounce = null;
 function saveReview(type,val){
   if(!mem.reviews) mem.reviews = { weekly:{}, monthly:{}, annual:{} };
   if(!mem.reviews[type]) mem.reviews[type] = {};
   mem.reviews[type].note = val;
-  mem.reviews[type].date = todayKey();
-  save();
+  // debounce the save to avoid serializing on every keystroke
+  if(reviewDebounce) clearTimeout(reviewDebounce);
+  reviewDebounce = setTimeout(()=>{ mem.reviews[type].date = todayKey(); save(); }, 500);
 }
 
 function renderHeatmap(){
@@ -1871,14 +1955,15 @@ function renderHeatmap(){
   days.forEach(d=>{
     const k = dayKey(d);
     const entry = mem.days[k];
-    if(!entry){ html += `<div class="cell"></div>`; return; }
-    if(entry.verdict==='match'){ html += `<div class="cell match"></div>`; return; }
+    const isToday = k === todayKey();
+    if(!entry){ html += `<div class="cell ${isToday?'today':''}"></div>`; return; }
+    if(entry.verdict==='match'){ html += `<div class="cell match ${isToday?'today':''}"></div>`; return; }
     const held = blocks.filter(b=>entry.held[b.id]).length;
     const pct = held/total;
     let lvl = '';
     if(pct>0){ lvl = pct<=0.25?'l1':pct<=0.5?'l2':pct<=0.75?'l3':'l4'; }
     if(entry.verdict==='drift' && !lvl) lvl = 'drift';
-    html += `<div class="cell ${lvl}" title="${k}: ${held}/${blocks.length} held"></div>`;
+    html += `<div class="cell ${lvl} ${isToday?'today':''}" title="${k}: ${held}/${blocks.length} held"></div>`;
   });
   el.innerHTML = html;
 }
@@ -2001,7 +2086,7 @@ function renderSettings(){
   html += `<textarea class="set-textarea" placeholder="e.g. Twitter, YouTube, Reddit" oninput="saveFriction('offenders',this.value)">${esc(f.offenders||'')}</textarea>`;
   html += `<div class="set-label">Nightly phone-park time & place</div>`;
   html += `<input class="set-input" value="${esc(f.phonePark||'')}" oninput="saveFriction('phonePark',this.value)" placeholder="e.g. 22:30, charges in kitchen">`;
-  html += `<div class="metric-toggle ${f.grayscale?'on':''}" onclick="saveFriction('grayscale',!${f.grayscale});renderSettings()" style="margin-top:10px"><span class="mt-label">📱 Grayscale enabled (Settings → Accessibility → Color Filters)</span><div class="mt-check">✓</div></div>`;
+  html += `<div class="metric-toggle ${f.grayscale?'on':''}" onclick="toggleGrayscale(this)" style="margin-top:10px"><span class="mt-label">📱 Grayscale enabled (Settings → Accessibility → Color Filters)</span><div class="mt-check">✓</div></div>`;
   html += `</div>`;
 
   // Trigger plans
@@ -2086,13 +2171,23 @@ function renderSettings(){
 
 // ===== ACTIONS: blocks =====
 function toggleBlock(id){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.held[id] = !d.held[id];
   save();
   renderTopBar();
   renderToday();
 }
 function editBlock(i,field,val){
+  if(field === 'time'){
+    // validate HH:MM format
+    const m = val.match(/^(\d{1,2}):(\d{2})$/);
+    if(!m || parseInt(m[1])>23 || parseInt(m[2])>59){
+      alert('Please enter a valid time as HH:MM (e.g. 06:30)');
+      renderSettings();
+      return;
+    }
+    val = m[1].padStart(2,'0')+':'+m[2];
+  }
   mem.idealDay.blocks[i][field] = val;
   save();
 }
@@ -2143,26 +2238,27 @@ function toggleRoutineDay(i,di){
 
 // ===== ACTIONS: verdict =====
 function setVerdict(v){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.verdict = (d.verdict===v) ? '' : v;
   if(d.verdict!=='drift') d.drifts = [];
   save();
   renderToday();
 }
 function updateDrift(i,val){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.drifts[i] = val;
-  if(!d.drifts.some(x=>x)) {} // keep verdict as drift
   save();
+  // re-render so the "→ correction" button appears when text is entered
+  renderToday();
 }
 function setMood(m){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.mood = (d.mood===m) ? 0 : m;
   save();
   renderToday();
 }
 function updateNote(val){
-  const d = dayObj(todayKey());
+  const d = dayObj(viewKey());
   d.note = val;
   save();
 }
@@ -2324,6 +2420,27 @@ function saveFriction(k,val){
   if(!mem.friction) mem.friction = { offenders:'', phonePark:'', grayscale:false, checked:false };
   mem.friction[k] = val;
   save();
+}
+function toggleGrayscale(el){
+  if(!mem.friction) mem.friction = { offenders:'', phonePark:'', grayscale:false, checked:false };
+  mem.friction.grayscale = !mem.friction.grayscale;
+  save();
+  // toggle class without full re-render (preserves scroll position)
+  el.classList.toggle('on', mem.friction.grayscale);
+}
+function changeViewDate(delta){
+  if(!viewDate) viewDate = todayKey();
+  const d = new Date(viewDate+'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  const newKey = dayKey(d);
+  // don't allow navigating to future
+  if(delta > 0 && newKey > todayKey()) return;
+  viewDate = newKey;
+  renderToday();
+}
+function resetViewDate(){
+  viewDate = '';
+  renderToday();
 }
 function addTriggerPlan(){
   const w = document.getElementById('tpWhen').value.trim();
