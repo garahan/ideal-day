@@ -421,6 +421,32 @@ h2.sec .sec-icon{font-size:13px;}
 .dn-spacer{width:36px;flex-shrink:0;}
 .past-banner{font-size:11px;color:var(--amber);background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.15);border-radius:var(--r-xs);padding:8px 12px;margin-bottom:12px;line-height:1.4;}
 
+/* ===== PROCRASTINATION REDIRECT ===== */
+.proc-redirect{padding:16px 18px;margin-bottom:14px;border-color:rgba(255,176,32,.2);background:linear-gradient(135deg,rgba(255,176,32,.04),rgba(255,94,58,.02));}
+.pr-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.pr-head .pr-icon{font-size:22px;}
+.pr-head .pr-title{font-size:15px;font-weight:700;color:var(--amber);}
+.pr-info{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;}
+.pr-options{display:flex;flex-direction:column;gap:6px;}
+.pr-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);transition:all .2s;}
+.pr-opt.clickable{cursor:pointer;}
+.pr-opt.clickable:active{transform:scale(.98);border-color:var(--amber);}
+.pr-opt-ico{font-size:18px;flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--card);display:flex;align-items:center;justify-content:center;}
+.pr-opt-body{flex:1;min-width:0;}
+.pr-opt-text{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
+.pr-opt-sub{font-size:11px;color:var(--faint);margin-top:2px;line-height:1.3;}
+.pr-opt-go{font-size:16px;color:var(--amber);flex-shrink:0;font-weight:700;}
+
+/* ===== PROCRASTINATION PATTERN BARS ===== */
+.proc-bar-item{padding:8px 0;border-bottom:1px solid var(--line);}
+.proc-bar-item:last-child{border-bottom:none;}
+.pbi-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.pbi-time{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);min-width:48px;}
+.pbi-label{flex:1;font-size:13px;color:var(--text);font-weight:500;}
+.pbi-pct{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.pbi-bar{height:5px;border-radius:99px;background:var(--surface);overflow:hidden;}
+.pbi-fill{height:100%;border-radius:99px;transition:width .5s var(--ease-out);}
+
 /* ===== APPLE HEALTH SYNC ===== */
 .health-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);transition:all .25s;}
 .health-bar.synced{border-color:rgba(34,197,94,.25);background:linear-gradient(135deg,var(--card),rgba(34,197,94,.04));}
@@ -785,6 +811,134 @@ function getBaseline(metric){
   vals.sort((a,b)=>a-b);
   const mid = Math.floor(vals.length/2);
   return vals.length%2 ? vals[mid] : (vals[mid-1]+vals[mid])/2;
+}
+
+// ===== PROCRASTINATION PATTERN DETECTION =====
+// Track which blocks have low hold rates — these are procrastination slots
+function blockHoldRate(blockId, days){
+  days = days || 14;
+  const keys = Object.keys(mem.days).sort().reverse().slice(0, days);
+  if(!keys.length) return null;
+  let held = 0, total = 0;
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    if(dd && dd.held){
+      total++;
+      if(dd.held[blockId]) held++;
+    }
+  });
+  return total > 0 ? held/total : null;
+}
+// Identify which hours of the day have the most unheld blocks (procrastination hotspots)
+function procrastinationHotspots(){
+  const blocks = mem.idealDay.blocks || [];
+  if(!blocks.length) return [];
+  const hotspots = blocks.map(b=>{
+    const rate = blockHoldRate(b.id);
+    if(rate === null) return null;
+    return {
+      block: b,
+      holdRate: rate,
+      isLow: rate < 0.5, // less than 50% held = procrastination slot
+      hour: blockMinutes(b),
+    };
+  }).filter(x=>x && x.isLow);
+  // sort by lowest hold rate first
+  hotspots.sort((a,b)=>a.holdRate - b.holdRate);
+  return hotspots;
+}
+// Is the user currently in a procrastination slot?
+function currentProcrastinationSlot(){
+  const now = nowMinutes();
+  const hotspots = procrastinationHotspots();
+  // find a low-hold block that's currently active (within 2h of start)
+  return hotspots.find(h=>{
+    const s = h.hour;
+    return now >= s && now < s + 120;
+  });
+}
+// Generate redirect suggestions: something productive to do RIGHT NOW instead
+function procrastinationRedirect(){
+  const slot = currentProcrastinationSlot();
+  if(!slot) return null;
+  const now = nowMinutes();
+  const d = dayObj(todayKey());
+  const options = [];
+
+  // 1. Due routine tasks
+  const rItems = todaysRoutine();
+  const rPending = rItems.filter(r=>!d.routineDone[r.id]);
+  if(rPending.length){
+    options.push({
+      type:'routine',
+      ico: rPending[0].icon || '🧹',
+      text: `Do ${rPending[0].label} now`,
+      sub: `${rPending.length} routine task${rPending.length>1?'s':''} pending today`,
+      action: `toggleRoutine('${rPending[0].id}')`,
+    });
+  }
+
+  // 2. Unheld blocks earlier today that are quick to do
+  const blocks = (mem.idealDay.blocks||[]).slice().sort((a,b)=>blockMinutes(a)-blockMinutes(b));
+  const unheldEarlier = blocks.filter(b=>{
+    const bm = blockMinutes(b);
+    return bm < now && !d.held[b.id] && bm < slot.hour;
+  });
+  if(unheldEarlier.length){
+    options.push({
+      type:'catchup',
+      ico: '✓',
+      text: `Catch up: hold "${unheldEarlier[0].label}"`,
+      sub: `You missed this earlier — it's not too late`,
+      action: `toggleBlock('${unheldEarlier[0].id}')`,
+    });
+  }
+
+  // 3. Smaller version of the current block (15-min version)
+  options.push({
+    type:'shrink',
+    ico: '⏱️',
+    text: `Do a 15-min version of "${slot.block.label}"`,
+    sub: `You hold this block only ${Math.round(slot.holdRate*100)}% of the time. A smaller version counts.`,
+    action: null, // no auto-action, just a nudge
+  });
+
+  // 4. A different productive block that's coming up and you usually hold
+  const upcoming = blocks.find(b=>{
+    const bm = blockMinutes(b);
+    return bm > now && bm < now + 90;
+  });
+  if(upcoming){
+    const upcomingRate = blockHoldRate(upcoming.id);
+    if(upcomingRate && upcomingRate > 0.5){
+      options.push({
+        type:'swap',
+        ico: '🔄',
+        text: `Skip ahead to "${upcoming.label}" (you hold this ${Math.round(upcomingRate*100)}% of the time)`,
+        sub: `Don't fight the slot you can't hold — do the one you can`,
+        action: `toggleBlock('${upcoming.id}')`,
+      });
+    }
+  }
+
+  // 5. Protein gap — if behind on nutrition, eat something
+  const nut = computeNutrition();
+  const meals = d.meals||[];
+  const proteinLogged = meals.reduce((s,m)=>s+(m.protein||0),0);
+  if(proteinLogged < nut.proteinTarget * 0.5){
+    options.push({
+      type:'fuel',
+      ico: '🥩',
+      text: `Eat something high-protein — you're at ${proteinLogged}g of ${nut.proteinTarget}g`,
+      sub: `Food is productive. Fueling your body counts.`,
+      action: null,
+    });
+  }
+
+  return {
+    slot: slot,
+    options: options.slice(0, 4), // max 4 options
+  };
 }
 
 // ===== LIFE MODE WEIGHTING =====
@@ -1226,6 +1380,38 @@ function toggleAutoSync(){
   renderSettings();
 }
 
+// ===== PROCRASTINATION REDIRECT RENDER =====
+function renderProcrastinationRedirect(){
+  // Only show after cold start (need data to detect patterns)
+  if(isColdStart()) return '';
+  const redirect = procrastinationRedirect();
+  if(!redirect) return '';
+  const slot = redirect.slot;
+  const opts = redirect.options;
+  if(!opts.length) return '';
+
+  let html = `<div class="glass proc-redirect">
+    <div class="pr-head">
+      <span class="pr-icon">🔄</span>
+      <div class="pr-title">You're in a procrastination slot</div>
+    </div>
+    <div class="pr-info">You hold "${esc(slot.block.label)}" only ${Math.round(slot.holdRate*100)}% of the time. Don't fight it — redirect to something productive instead:</div>
+    <div class="pr-options">`;
+  opts.forEach((o,i)=>{
+    const clickable = o.action ? `onclick="${o.action}"` : '';
+    html += `<div class="pr-opt ${clickable?'clickable':''}" ${clickable}>
+      <div class="pr-opt-ico">${o.ico}</div>
+      <div class="pr-opt-body">
+        <div class="pr-opt-text">${esc(o.text)}</div>
+        <div class="pr-opt-sub">${esc(o.sub)}</div>
+      </div>
+      ${o.action?'<div class="pr-opt-go">→</div>':''}
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
 // ===== RE-ENTRY PROTOCOL =====
 function renderReEntry(d){
   const keys = Object.keys(mem.days).sort();
@@ -1630,6 +1816,9 @@ function renderToday(){
     html += `</div>`;
   }
 
+  // Procrastination redirect — when in a low-hold slot, suggest something to do NOW
+  if(isToday) html += renderProcrastinationRedirect();
+
   // Apple Health sync bar (suggestions are now integrated into the main engine)
   if(isToday) html += renderHealthSyncBar();
 
@@ -1813,6 +2002,9 @@ function renderHistory(){
     html += `</div>`;
   }
 
+  // Procrastination patterns — which blocks you hold vs skip
+  html += renderProcrastinationPatterns();
+
   // Reviews
   html += renderReviews();
 
@@ -1820,6 +2012,38 @@ function renderHistory(){
   document.getElementById('tab-history').classList.add('fade');
   setTimeout(()=>document.getElementById('tab-history').classList.remove('fade'),400);
   renderHeatmap();
+}
+
+// ===== PROCRASTINATION PATTERNS (History tab) =====
+function renderProcrastinationPatterns(){
+  if(isColdStart()) return ''; // need data
+  const blocks = (mem.idealDay.blocks||[]).slice().sort((a,b)=>blockMinutes(a)-blockMinutes(b));
+  if(!blocks.length) return '';
+
+  let html = `<h2 class="sec"><span class="sec-icon">📊</span>Block hold rates — where you procrastinate</h2>`;
+  html += `<div class="glass" style="padding:14px 16px">`;
+
+  blocks.forEach(b=>{
+    const rate = blockHoldRate(b.id);
+    if(rate === null) return; // not enough data
+    const pct = Math.round(rate*100);
+    const isLow = rate < 0.5;
+    const barColor = isLow ? 'var(--coral)' : rate < 0.75 ? 'var(--amber)' : 'var(--green)';
+    const label = isLow ? 'procrastination slot' : rate < 0.75 ? 'inconsistent' : 'reliable';
+    const labelColor = isLow ? 'var(--coral)' : rate < 0.75 ? 'var(--amber)' : 'var(--green)';
+
+    html += `<div class="proc-bar-item">
+      <div class="pbi-head">
+        <span class="pbi-time">${b.time}</span>
+        <span class="pbi-label">${esc(b.label)}</span>
+        <span class="pbi-pct" style="color:${labelColor}">${pct}% · ${label}</span>
+      </div>
+      <div class="pbi-bar"><div class="pbi-fill" style="width:${pct}%;background:${barColor}"></div></div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  return html;
 }
 
 // ===== REVIEWS =====
