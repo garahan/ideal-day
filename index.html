@@ -239,6 +239,7 @@ h2.sec .sec-icon{font-size:13px;}
 .sugg-body{flex:1;min-width:0;}
 .sugg-text{font-size:13.5px;color:var(--text);line-height:1.4;font-weight:500;}
 .sugg-meta{font-size:11px;color:var(--faint);margin-top:2px;}
+.sugg-reason{font-size:10px;color:var(--faint);margin-top:4px;padding:6px 8px;background:rgba(11,15,26,.5);border-radius:6px;border-left:2px solid var(--line2);line-height:1.4;font-style:italic;opacity:.85;}
 .sugg-item.high .sugg-ico{background:rgba(255,94,58,.12);}
 .sugg-item.high .sugg-text{color:var(--coral);}
 .sugg-item.med .sugg-ico{background:rgba(255,176,32,.12);}
@@ -442,11 +443,11 @@ h2.sec .sec-icon{font-size:13px;}
     <h1>Ideal Day</h1>
     <p>Define your ideal day. Log whether you held it. Name the drifts. Work corrections until they graduate to autopilot.</p>
     <div class="steps">
-      <h3>Your first 7 days</h3>
+      <h3>Your first 14 days (quiet observe mode)</h3>
       <li><b>Day 1 (tonight):</b> Friction setup — offender apps off home screen, grayscale, phone-park time. Write 2-3 trigger plans.</li>
       <li><b>Day 2:</b> Define your ideal ordinary day. Set wake/wind-down/target sleep in Settings.</li>
-      <li><b>Days 2–7:</b> Run the surface morning + night. Log metrics by glance. Check in on mood/energy. Add nothing else.</li>
-      <li><b>Day 7:</b> First look at the week's numbers. Pick correction #1 for the queue. Adjust from what actually happened.</li>
+      <li><b>Days 2–14:</b> Run the surface morning + night. The system is in <b>quiet observe mode</b> — it senses and learns your normal, no judgments yet. It earns the right to be blunt once its baselines are real.</li>
+      <li><b>Day 14:</b> Full intelligence activates. Baselines are real. The system starts flagging drift with reasoning. Pick correction #1 for the queue.</li>
     </div>
     <div class="steps" style="margin-bottom:16px">
       <h3>The daily loop</h3>
@@ -564,6 +565,9 @@ let mem = {
   reviews:{ weekly:{}, monthly:{}, annual:{} },
   onboardDay: 0,
   healthSync: { setupDone:false, autoSync:true, lastAutoTrigger:'' },
+  lifeMode: 'normal', // normal | crisis | vacation
+  modeSetDate: '',
+  startDate: '', // when user started using the app — for cold start detection
 };
 let curTab = 'today';
 
@@ -592,6 +596,9 @@ function load(){
       if(mem.healthSync.setupDone===undefined) mem.healthSync.setupDone = false;
       if(mem.healthSync.autoSync===undefined) mem.healthSync.autoSync = true;
       if(mem.healthSync.lastAutoTrigger===undefined) mem.healthSync.lastAutoTrigger = '';
+      if(!mem.lifeMode) mem.lifeMode = 'normal';
+      if(!mem.modeSetDate) mem.modeSetDate = '';
+      if(!mem.startDate) mem.startDate = todayKey();
       // ensure each block has a domain
       (mem.idealDay.blocks||[]).forEach(b=>{ if(!b.domain) b.domain='meta_time'; });
       // ensure each day has all fields
@@ -652,7 +659,7 @@ function dayObj(key){
 }
 
 // ===== ONBOARD =====
-function finishOnboard(){ mem.onboarded = true; save(); document.getElementById('onboard').classList.add('hide'); renderAll(); }
+function finishOnboard(){ mem.onboarded = true; if(!mem.startDate) mem.startDate = todayKey(); save(); document.getElementById('onboard').classList.add('hide'); renderAll(); }
 
 // ===== TABS =====
 function switchTab(t){
@@ -725,127 +732,278 @@ function computeNutrition(){
 }
 
 // ===== SMART SUGGESTIONS ENGINE (rule-based, derived from data) =====
+// ===== COLD START / BASELINE DETECTION =====
+function daysSinceStart(){
+  if(!mem.startDate) return 0;
+  const start = new Date(mem.startDate+'T00:00:00');
+  const today = new Date(todayKey()+'T00:00:00');
+  return Math.floor((today - start) / 86400000);
+}
+function isColdStart(){
+  // 2-week quiet observe mode: no judgment until baselines are real
+  return daysSinceStart() < 14;
+}
+function hasBaseline(metric){
+  // need at least 5 data points to have a "normal"
+  let count = 0;
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    if(dd[metric] && dd[metric] > 0) count++;
+  });
+  return count >= 5;
+}
+function getBaseline(metric){
+  // return median of last 14 days
+  const vals = [];
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    if(dd[metric] && dd[metric] > 0) vals.push(dd[metric]);
+  });
+  if(!vals.length) return null;
+  vals.sort((a,b)=>a-b);
+  const mid = Math.floor(vals.length/2);
+  return vals.length%2 ? vals[mid] : (vals[mid-1]+vals[mid])/2;
+}
+
+// ===== LIFE MODE WEIGHTING =====
+const LIFE_MODES = {
+  normal:   { name:'Normal',   icon:'✅', desc:'Baseline expectations — full system active', suppress:[], floorOnly:[] },
+  crisis:   { name:'Crisis',   icon:'🚨', desc:'Reduced expectations — protect sleep, drop optional domains, surface only critical items', suppress:['nutrition','routine','antiProc','gapScore'], floorOnly:['blocks','corrections'] },
+  vacation: { name:'Vacation', icon:'🏖️', desc:'Paused — no tracking, no suggestions, no streaks. Resume when ready.', suppress:['all'], floorOnly:[] },
+};
+function activeMode(){ return LIFE_MODES[mem.lifeMode] || LIFE_MODES.normal; }
+function setLifeMode(mode){
+  mem.lifeMode = mode;
+  mem.modeSetDate = todayKey();
+  save();
+  renderAll();
+}
+
+// ===== SUGGESTIONS ENGINE (scarcity + transparency + cold start) =====
 function computeSuggestions(){
   const tk = todayKey();
   const d = dayObj(tk);
   const blocks = (mem.idealDay.blocks||[]).slice().sort((a,b)=>blockMinutes(a)-blockMinutes(b));
   const now = nowMinutes();
   const active = (mem.queue||[]).filter(c=>c.status==='active');
+  const mode = activeMode();
+  const cold = isColdStart();
   const sugg = [];
 
+  // VACATION MODE: suppress everything
+  if(mode.name === 'Vacation'){
+    return [];
+  }
+
+  // COLD START: observe, don't judge
+  if(cold){
+    const dayN = daysSinceStart() + 1;
+    if(dayN <= 14){
+      sugg.push({
+        ico:'🧊',
+        text:`Day ${dayN} of 14 — quiet observe mode`,
+        meta:`The system is learning your normal. No judgments yet — just log your day and let baselines build. ${14-dayN} days until full intelligence activates.`,
+        pri:'low',
+        reason:`Cold start: ${dayN < 5 ? 'too early to judge — need at least 5 data points per metric' : dayN < 10 ? 'building baselines — patterns are forming' : 'almost there — baselines nearly real'}`
+      });
+      // still show NOW/next block (informational, not judgmental)
+      if(blocks.length){
+        const current = blocks.find(b=>{ const s=blockMinutes(b); return now>=s && now<s+120; });
+        const upcoming = blocks.find(b=>blockMinutes(b)>now);
+        if(current && !d.held[current.id]){
+          sugg.push({ ico:'⏰', text:`Now: ${current.label}`, meta:current.holds||'', pri:'low', reason:'Informational — your ideal day says this block is active' });
+        } else if(upcoming){
+          const mins = blockMinutes(upcoming)-now;
+          const inH = Math.floor(mins/60), inM = mins%60;
+          sugg.push({ ico:'👉', text:`Next: ${upcoming.label} in ${inH>0?inH+'h ':''}${inM}m`, meta:upcoming.holds||'', pri:'low', reason:'Informational — no judgment during cold start' });
+        }
+      }
+      // verdict reminder (still needed — data collection)
+      if(now >= 20*60 && !d.verdict){
+        sugg.push({ ico:'🌙', text:`Log tonight's verdict`, meta:'This is the data that powers everything. Takes 30 seconds.', pri:'high', reason:'Cold start needs verdict data to build baselines — this is the one thing we ask during observe mode' });
+      }
+      return sugg.slice(0,3);
+    }
+  }
+
+  // CRISIS MODE: suppress non-critical, floor-only for the rest
+  const suppress = mode.suppress || [];
+  const isSuppressed = (cat) => suppress.includes('all') || suppress.includes(cat);
+
   // 1. Current / next ideal block
-  if(blocks.length){
+  if(blocks.length && !isSuppressed('blocks')){
     const current = blocks.find(b=>{ const s=blockMinutes(b); return now>=s && now<s+120; });
     const upcoming = blocks.find(b=>blockMinutes(b)>now);
     if(current){
       const held = !!d.held[current.id];
-      if(!held) sugg.push({ ico:'⏰', text:`Now: ${current.label} — ${current.holds||''}`, meta:'Your ideal day says this block is active', pri:'high' });
+      if(!held) sugg.push({
+        ico:'⏰',
+        text:`Now: ${current.label} — ${current.holds||''}`,
+        meta:'Your ideal day says this block is active',
+        pri:'high',
+        reason:`Flagging because it's ${formatTime(now)} and this block (${current.label}) is scheduled for ${current.time} and not yet held`
+      });
     } else if(upcoming){
       const mins = blockMinutes(upcoming)-now;
       const inH = Math.floor(mins/60), inM = mins%60;
-      sugg.push({ ico:'👉', text:`Next up: ${upcoming.label} in ${inH>0?inH+'h ':''}${inM}m`, meta:upcoming.holds||'', pri:'low' });
+      sugg.push({ ico:'👉', text:`Next up: ${upcoming.label} in ${inH>0?inH+'h ':''}${inM}m`, meta:upcoming.holds||'', pri:'low', reason:`Your next ideal block is at ${upcoming.time}` });
     } else {
-      // all blocks passed
       const unheld = blocks.filter(b=>!d.held[b.id]);
-      if(unheld.length) sugg.push({ ico:'🌙', text:`${unheld.length} ideal block${unheld.length>1?'s':''} unheld today`, meta:unheld.map(b=>b.label).join(', '), pri:'med' });
+      if(unheld.length) sugg.push({ ico:'🌙', text:`${unheld.length} ideal block${unheld.length>1?'s':''} unheld today`, meta:unheld.map(b=>b.label).join(', '), pri:'med', reason:`${unheld.length} of ${blocks.length} blocks passed without being held` });
     }
   }
 
   // 2. Correction streak risk (late in day, not held)
-  active.forEach(c=>{
-    const heldToday = !!d.corrections[c.id];
-    if(!heldToday && now >= 20*60){ // after 8pm
-      sugg.push({ ico:'🔥', text:`"${c.text}" not held today — streak at risk`, meta:c.identityLine||'Mark it before bed', pri:'high' });
-    } else if(!heldToday && now >= 15*60){
-      sugg.push({ ico:'🎯', text:`Hold "${c.text}" today`, meta:c.identityLine||'', pri:'med' });
-    }
-  });
+  if(!isSuppressed('corrections')){
+    active.forEach(c=>{
+      const heldToday = !!d.corrections[c.id];
+      if(!heldToday && now >= 20*60){
+        sugg.push({ ico:'🔥', text:`"${c.text}" not held today — streak at risk`, meta:c.identityLine||'Mark it before bed', pri:'high', reason:`Flagging because it's after 8pm and this correction (${c.text}) hasn't been held today. Current streak: ${corrStreak(c,tk)} days.` });
+      } else if(!heldToday && now >= 15*60){
+        sugg.push({ ico:'🎯', text:`Hold "${c.text}" today`, meta:c.identityLine||'', pri:'med', reason:`Afternoon reminder — this correction is active and not yet held today` });
+      }
+    });
+  }
 
   // 3. Most-drifted block (from last 14 days of verdicts)
-  const driftCounts = {};
-  const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
-  keys.forEach(k=>{
-    const dd = mem.days[k];
-    if(dd.verdict==='drift' && dd.drifts){
-      dd.drifts.filter(x=>x).forEach(dr=>{
-        // fuzzy match drift text to a block label
-        const dl = dr.toLowerCase();
-        const match = blocks.find(b=>dl.includes(b.label.toLowerCase()));
-        if(match) driftCounts[match.id] = (driftCounts[match.id]||0)+1;
-      });
+  if(!isSuppressed('drifts')){
+    const driftCounts = {};
+    const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
+    keys.forEach(k=>{
+      const dd = mem.days[k];
+      if(dd.verdict==='drift' && dd.drifts){
+        dd.drifts.filter(x=>x).forEach(dr=>{
+          const dl = dr.toLowerCase();
+          const match = blocks.find(b=>dl.includes(b.label.toLowerCase()));
+          if(match) driftCounts[match.id] = (driftCounts[match.id]||0)+1;
+        });
+      }
+    });
+    const topDrift = Object.entries(driftCounts).sort((a,b)=>b[1]-a[1])[0];
+    if(topDrift && topDrift[1]>=2){
+      const blk = blocks.find(b=>b.id===topDrift[0]);
+      if(blk && !d.held[blk.id]) sugg.push({ ico:'📉', text:`"${blk.label}" drifts most for you (${topDrift[1]}× lately)`, meta:'Make it a correction tonight if it drifts again', pri:'med', reason:`Flagging because "${blk.label}" appears in ${topDrift[1]} of your last 14 drift verdicts — this is your highest-frequency drift` });
     }
-  });
-  const topDrift = Object.entries(driftCounts).sort((a,b)=>b[1]-a[1])[0];
-  if(topDrift && topDrift[1]>=2){
-    const blk = blocks.find(b=>b.id===topDrift[0]);
-    if(blk && !d.held[blk.id]) sugg.push({ ico:'📉', text:`"${blk.label}" drifts most for you (${topDrift[1]}× lately)`, meta:'Make it a correction tonight if it drifts again', pri:'med' });
   }
 
   // 4. Nutrition: protein behind schedule
-  const nut = computeNutrition();
-  const meals = d.meals||[];
-  const proteinLogged = meals.reduce((s,m)=>s+(m.protein||0),0);
-  const proteinLeft = nut.proteinTarget - proteinLogged;
-  const dayProgress = now/(24*60);
-  const expectedProtein = nut.proteinTarget * dayProgress;
-  if(proteinLeft > 0 && proteinLogged < expectedProtein * 0.7 && now > 10*60 && now < 21*60){
-    const deficit = Math.round(expectedProtein - proteinLogged);
-    sugg.push({ ico:'🥩', text:`Protein behind: ${deficit}g behind pace (${proteinLogged}/${nut.proteinTarget}g)`, meta:'Add a high-protein meal — see Fuel below', pri:'med' });
+  if(!isSuppressed('nutrition')){
+    const nut = computeNutrition();
+    const meals = d.meals||[];
+    const proteinLogged = meals.reduce((s,m)=>s+(m.protein||0),0);
+    const proteinLeft = nut.proteinTarget - proteinLogged;
+    const dayProgress = now/(24*60);
+    const expectedProtein = nut.proteinTarget * dayProgress;
+    if(proteinLeft > 0 && proteinLogged < expectedProtein * 0.7 && now > 10*60 && now < 21*60){
+      const deficit = Math.round(expectedProtein - proteinLogged);
+      sugg.push({ ico:'🥩', text:`Protein behind: ${deficit}g behind pace (${proteinLogged}/${nut.proteinTarget}g)`, meta:'Add a high-protein meal — see Fuel below', pri:'med', reason:`Flagging because you've logged ${proteinLogged}g protein but should be at ~${Math.round(expectedProtein)}g by now (${Math.round(dayProgress*100)}% through the day)` });
+    }
   }
 
   // 5. Verdict reminder (evening, not done)
   if(now >= 20*60 && !d.verdict){
-    sugg.push({ ico:'🌙', text:`Write tonight's verdict — did the day match the ideal?`, meta:'Takes 30 seconds. This is the data that powers everything.', pri:'high' });
+    sugg.push({ ico:'🌙', text:`Write tonight's verdict — did the day match the ideal?`, meta:'Takes 30 seconds. This is the data that powers everything.', pri:'high', reason:`Flagging because it's after 8pm and no verdict logged yet — this data feeds drift detection, gap scores, and weekly reviews` });
   }
 
   // 6. Never miss twice (yesterday drifted, today not started)
   const yK = new Date(); yK.setDate(yK.getDate()-1);
   const yEntry = mem.days[dayKey(yK)];
   if(yEntry && yEntry.verdict==='drift' && blocks.filter(b=>d.held[b.id]).length===0 && now > 9*60){
-    sugg.push({ ico:'⚡', text:`Yesterday drifted — today, hold at least one block`, meta:'Never miss twice. One block is enough to break the slide.', pri:'high' });
+    sugg.push({ ico:'⚡', text:`Yesterday drifted — today, hold at least one block`, meta:'Never miss twice. One block is enough to break the slide.', pri:'high', reason:`Flagging because yesterday was a drift day and today has zero blocks held — the most important moment is the day after a miss` });
   }
 
   // 7. Routine items pending (afternoon/evening)
-  const rItems = todaysRoutine();
-  const rDone = rItems.filter(r=>d.routineDone[r.id]).length;
-  const rLeft = rItems.length - rDone;
-  if(rLeft > 0 && now >= 16*60){
-    const next = rItems.find(r=>!d.routineDone[r.id]);
-    sugg.push({ ico:next.icon||'🧹', text:`${rLeft} routine task${rLeft>1?'s':''} pending: ${next.label}`, meta:rItems.filter(r=>!d.routineDone[r.id]).map(r=>r.label).join(', '), pri:'med' });
+  if(!isSuppressed('routine')){
+    const rItems = todaysRoutine();
+    const rDone = rItems.filter(r=>d.routineDone[r.id]).length;
+    const rLeft = rItems.length - rDone;
+    if(rLeft > 0 && now >= 16*60){
+      const next = rItems.find(r=>!d.routineDone[r.id]);
+      sugg.push({ ico:next.icon||'🧹', text:`${rLeft} routine task${rLeft>1?'s':''} pending: ${next.label}`, meta:rItems.filter(r=>!d.routineDone[r.id]).map(r=>r.label).join(', '), pri:'med', reason:`Flagging because ${rLeft} of ${rItems.length} routine tasks are still undone and it's after 4pm` });
+    }
   }
 
-  // 8. Low sleep last night → suggest lighter day
-  if(d.sleep > 0 && d.sleep < 6.5 && now < 10*60){
-    sugg.push({ ico:'😴', text:`Only ${d.sleep}h sleep — do Floor versions today, protect energy`, meta:'Prioritize recovery over intensity', pri:'high' });
+  // 8. Low sleep last night → suggest lighter day (with baseline comparison)
+  if(d.sleep > 0 && now < 10*60){
+    const baseline = hasBaseline('sleep') ? getBaseline('sleep') : null;
+    if(d.sleep < 6.5){
+      const reasonText = baseline ? `Flagging because you slept ${d.sleep}h — your 14-day baseline is ${baseline.toFixed(1)}h, so this is ${(baseline - d.sleep).toFixed(1)}h below normal` : `Flagging because you slept ${d.sleep}h — below the 6.5h threshold for a good day`;
+      sugg.push({ ico:'😴', text:`Only ${d.sleep}h sleep — do Floor versions today, protect energy`, meta:'Prioritize recovery over intensity', pri:'high', reason:reasonText });
+    }
   }
 
-  // 9. High screen time warning
-  if(d.screenTime > 0 && d.screenTime > 3 && now >= 20*60){
-    sugg.push({ ico:'📱', text:`${d.screenTime}h screen time today — over your ideal`, meta:'Check your trigger plans. What was the cue?', pri:'med' });
+  // 9. High screen time warning (with baseline)
+  if(d.screenTime > 0 && d.screenTime > 3 && now >= 20*60 && !isSuppressed('screenTime')){
+    const baseline = hasBaseline('screenTime') ? getBaseline('screenTime') : null;
+    const reasonText = baseline ? `Flagging because you're at ${d.screenTime}h screen time — your baseline is ${baseline.toFixed(1)}h` : `Flagging because ${d.screenTime}h screen time is above the 3h threshold`;
+    sugg.push({ ico:'📱', text:`${d.screenTime}h screen time today — over your ideal`, meta:'Check your trigger plans. What was the cue?', pri:'med', reason:reasonText });
   }
 
-  // 10. High stress
+  // 10. High stress (PROTECT, don't optimize — this is a Rest & Joy guard)
   if(d.stress >= 4 && now >= 18*60){
-    sugg.push({ ico:'😰', text:`High stress (${d.stress}/5) — do something restorative tonight`, meta:'Protect joy. The system celebrates as hard as it critiques.', pri:'med' });
+    sugg.push({ ico:'😰', text:`High stress (${d.stress}/5) — do something restorative tonight`, meta:'Protect joy. The system celebrates as hard as it critiques.', pri:'med', reason:`Flagging because stress is ${d.stress}/5 — this is a protection signal, not an optimization one. Rest is not a weakness.` });
   }
 
   // 11. Anti-procrastination checklist not done
-  const ap = mem.antiProc || [];
-  if(!ap.every(x=>x) && now >= 9*60 && now <= 12*60){
-    const undone = ap.filter(x=>!x).length;
-    sugg.push({ ico:'🛡️', text:`${undone} anti-procrastination items unchecked`, meta:'Environment before willpower. Set it up once.', pri:'med' });
+  if(!isSuppressed('antiProc')){
+    const ap = mem.antiProc || [];
+    if(!ap.every(x=>x) && now >= 9*60 && now <= 12*60){
+      const undone = ap.filter(x=>!x).length;
+      sugg.push({ ico:'🛡️', text:`${undone} anti-procrastination items unchecked`, meta:'Environment before willpower. Set it up once.', pri:'med', reason:`Flagging because ${undone} of 7 friction-setup items are unchecked — environment design is the highest-leverage thing you can do` });
+    }
   }
 
   // 12. Gap score suggestion
-  const gs = computeGapScore(d, blocks);
-  if(gs.biggestGap && gs.biggestGap.count >= 3 && now >= 19*60){
-    sugg.push({ ico:'📉', text:`"${gs.biggestGap.label}" is your biggest recurring gap (${gs.biggestGap.count}× lately)`, meta:'Make it a correction tonight', pri:'med' });
+  if(!isSuppressed('gapScore')){
+    const gs = computeGapScore(d, blocks);
+    if(gs.biggestGap && gs.biggestGap.count >= 3 && now >= 19*60){
+      sugg.push({ ico:'📉', text:`"${gs.biggestGap.label}" is your biggest recurring gap (${gs.biggestGap.count}× lately)`, meta:'Make it a correction tonight', pri:'med', reason:`Flagging because "${gs.biggestGap.label}" has been unheld ${gs.biggestGap.count} times in the last 14 days — this is your highest-leverage correction candidate` });
+    }
   }
 
-  // sort by priority
+  // 13. REST & JOY PROTECTION: if restorative not done and it's evening, suggest it
+  // This is the anti-taskmaster guard — the system must protect joy, not optimize it
+  if(!d.restorative && now >= 17*60 && now <= 21*60){
+    sugg.push({
+      ico:'🎨',
+      text:`Do something restorative tonight — not productive, just joyful`,
+      meta:'Protect joy. This is not a task to optimize — it\'s a guard against the system becoming a taskmaster.',
+      pri:'med',
+      reason:'Flagging because no restorative activity logged today. The system is designed to celebrate as hard as it critiques — rest and joy are things to protect, not optimize. A brutally honest machine scoring your body every morning can silently become a taskmaster that makes you feel permanently behind. This is the opposite of gratitude-in-30-years.'
+    });
+  }
+
+  // ===== SCARCITY PRIORITIZER =====
+  // The real job isn't "surface everything wrong" — it's "spend today's finite
+  // attention on the one or two highest-leverage things and stay silent on the rest."
   const order = {high:0, med:1, low:2};
   sugg.sort((a,b)=>order[a.pri]-order[b.pri]);
-  return sugg.slice(0,5);
+
+  // In crisis mode: only show high-priority items, max 2
+  if(mode.name === 'Crisis'){
+    const highOnly = sugg.filter(s=>s.pri==='high').slice(0,2);
+    return highOnly;
+  }
+
+  // Normal mode: show at most 2 high + 1 med (scarcity is a feature)
+  const high = sugg.filter(s=>s.pri==='high');
+  const med = sugg.filter(s=>s.pri==='med');
+  const low = sugg.filter(s=>s.pri==='low');
+  const result = [];
+  // always include the cold-start banner if present
+  const coldBanner = sugg.find(s=>s.ico==='🧊');
+  if(coldBanner) result.push(coldBanner);
+  result.push(...high.slice(0,2));
+  result.push(...med.slice(0,1));
+  // only show low-priority if nothing else
+  if(result.length === 0) result.push(...low.slice(0,2));
+  return result.slice(0,3);
+}
+function formatTime(mins){
+  const h = Math.floor(mins/60), m = mins%60;
+  return `${h}:${String(m).padStart(2,'0')}`;
 }
 
 // ===== APPLE HEALTH SYNC (Shortcuts URL Bridge) =====
@@ -1379,15 +1537,19 @@ function renderToday(){
     <div class="info"><div class="q">${quality}</div><div class="s">${heldCount} of ${blocks.length} ideal blocks held</div></div>
   </div>`;
 
-  // Smart suggestions (rule-based, derived from data)
+  // Smart suggestions (rule-based, derived from data — with verdict transparency)
   const sugg = computeSuggestions();
   if(sugg.length){
     html += `<div class="glass sugg">
-      <div class="sugg-head"><span class="dot"></span>Smart suggestions</div>`;
+      <div class="sugg-head"><span class="dot"></span>Smart suggestions${isColdStart()?' · observe mode':''}${activeMode().name!=='Normal'?' · '+activeMode().name+' mode':''}</div>`;
     sugg.forEach(s=>{
       html += `<div class="sugg-item ${s.pri}">
         <div class="sugg-ico">${s.ico}</div>
-        <div class="sugg-body"><div class="sugg-text">${esc(s.text)}</div>${s.meta?`<div class="sugg-meta">${esc(s.meta)}</div>`:''}</div>
+        <div class="sugg-body">
+          <div class="sugg-text">${esc(s.text)}</div>
+          ${s.meta?`<div class="sugg-meta">${esc(s.meta)}</div>`:''}
+          ${s.reason?`<div class="sugg-reason">why: ${esc(s.reason)}</div>`:''}
+        </div>
       </div>`;
     });
     html += `</div>`;
@@ -1855,6 +2017,20 @@ function renderSettings(){
   html += `<button class="set-btn full" style="margin-top:10px" onclick="addTriggerPlan()">+ Add trigger plan</button>`;
   html += `</div>`;
 
+  // Life mode switching
+  const curMode = activeMode();
+  html += `<h2 class="sec"><span class="sec-icon">${curMode.icon}</span>Life mode</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Your "normal" isn't constant. A crisis week, a vacation, an illness — each should re-weight the whole system, not fight your old baseline. Without modes, the system nags you to hit the gym during the week your grandfather is in hospital, which is exactly wrong.</div>`;
+  Object.entries(LIFE_MODES).forEach(([key,m])=>{
+    const active = mem.lifeMode === key;
+    html += `<div class="metric-toggle ${active?'on':''}" onclick="setLifeMode('${key}')" style="margin-bottom:6px">
+      <span class="mt-label">${m.icon} ${m.name} — ${m.desc}</span>
+      <div class="mt-check">${active?'✓':''}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
   // Profile (for nutrition calculations)
   const p = mem.profile || {};
   const nut = computeNutrition();
@@ -2187,7 +2363,7 @@ function resetData(){
   if(!confirm('Reset ALL data? This cannot be undone.')) return;
   if(!confirm('Really? Everything — ideal day, history, corrections — gone.')) return;
   localStorage.removeItem('idealDay');
-  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0, healthSync:{ setupDone:false, autoSync:true, lastAutoTrigger:'' } };
+  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0, healthSync:{ setupDone:false, autoSync:true, lastAutoTrigger:'' }, lifeMode:'normal', modeSetDate:'', startDate:todayKey() };
   save();
   renderAll();
 }

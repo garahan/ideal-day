@@ -99,6 +99,47 @@ Each ideal-day block is tagged with a domain. The monthly review shows domain ba
 - **Stall detection:** if a correction has no holds in 7 days and is 2+ weeks old, the system suggests shrinking it to something more atomic
 - **Identity framing:** each correction gets an identity line ("I am someone who…")
 
+## Design principles (from the source document)
+
+These are the design decisions that prevent the system from quietly dying months in:
+
+### Cold start (quiet observe mode)
+On day one the system knows nothing about you, so it can't be "brutally honest" — it has no baseline to be honest against. If it starts judging immediately it'll make dumb calls and you'll stop trusting it in week one. The fix: a **2-week quiet observe mode** where it only senses and learns your normal, and earns the right to be blunt once its baselines are real. After day 14, full intelligence activates with baseline comparisons ("you slept 5.2h — your 14-day baseline is 7.1h").
+
+### Scarcity is a feature
+The prioritizer's real job isn't "surface everything wrong" — it's "spend today's finite attention on the **one or two highest-leverage things** and stay silent on the rest." The system shows at most 3 suggestions (2 high + 1 medium), never an impossible list. A system that admits tradeoffs beats one that pretends you can be top-2% at everything simultaneously.
+
+### Verdict transparency
+For brutal honesty to land instead of getting dismissed, every hard call shows its work: "flagging this because it's 18 days, and this is the one domain you can't get back" — not a black-box "call grandma." Every suggestion includes a `why:` reasoning line so you can see exactly why the system flagged it. A verdict you can see the reasoning behind gets acted on; an oracle gets ignored.
+
+### Graceful re-entry
+You will fall off — vacation, illness, a crisis week. If the system greets your return with a pile of red and broken streaks, you'll close it forever. The **re-entry protocol** detects 3+ day gaps and shows a "Welcome back, here's the one thing to restart with" banner. No guilt ledger, no backlog. Most habit apps fail exactly here because they punish you hardest at your most fragile.
+
+### Life-mode switching
+Your "normal" isn't constant. A new job, a move, a crisis, a vacation — each should re-weight the whole system, not fight your old baseline. Without modes, the system nags you to hit the gym during the week your grandfather is in hospital, which is exactly wrong. Three modes:
+- **Normal** — full system active, baseline expectations
+- **Crisis** — reduced expectations, protect sleep, drop optional domains, surface only critical items (max 2 suggestions)
+- **Vacation** — paused, no tracking, no suggestions, no streaks. Resume when ready.
+
+### Rest & Joy protection (anti-taskmaster guard)
+A brutally honest machine scoring your body every morning can silently become a taskmaster that makes you feel permanently behind. That's the opposite of gratitude-in-30-years. So the system **celebrates as hard as it critiques**, and treats Rest and Joy as things to **protect, not optimize**. The gratitude layer is built in on purpose — if you don't build it in, the optimization eats it.
+
+### Longevity / data portability
+The thesis is 30 years. If you build on an app that shuts down, a decade of data and habit dies with it. This is built **local-first** — all data in your browser's localStorage, exportable as JSON at any time. No backend, no account, no lock-in.
+
+## The four nested loops
+
+The system runs four loops, not one. This is the mechanism behind "tiny moves → huge changes":
+
+| Loop | Cadence | Purpose |
+|---|---|---|
+| **Daily** | Every day | Act (1–3 moves). What you feel. |
+| **Weekly** | Every 7 days | Review drift trends, rotate the queue, adjust weights (~10 min) |
+| **Monthly** | Every 30 days | Rebalance which domains are live, re-check ideal-day template (~20 min) |
+| **Annual** | Every year | North star — "am I actually ahead, and am I grateful?" (~60 min) |
+
+The daily loop is what you feel; the annual loop is what the whole thing is *for*. Skip the outer loops and you get a very engaging daily ritual that drifts nowhere — which is most self-tracking.
+
 ## Smart suggestions engine
 
 All suggestions are **deterministic, rule-based code** — no LLM. 12 triggers:
