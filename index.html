@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ideal Day">
+<link rel="manifest" href="manifest.json">
+<title>Ideal Day — Drift Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0F1A; --surface:#141927; --card:#1B2235; --card2:#232B42; --line:#2B3349; --line2:#3D4763;
+  --text:#EAEDF5; --muted:#8B95AD; --faint:#586279;
+  --accent:#4A7EFF; --teal:#14B8A6; --amber:#FFB020; --coral:#FF5E3A;
+  --green:#22C55E; --green-dim:#0E3B22; --gold:#FBBF24; --red-dim:#3B1414;
+  --r:22px; --r-sm:16px; --r-xs:11px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --shadow-card:0 8px 40px rgba(0,0,0,.4),0 1px 3px rgba(0,0,0,.2);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-out:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;overflow-x:hidden;font-feature-settings:'tnum' 1;letter-spacing:-.003em;}
+body{max-width:540px;margin:0 auto;padding:calc(16px + var(--safe-t)) 16px calc(96px + var(--safe-b));
+  background:
+    radial-gradient(900px 600px at 80% -8%, rgba(74,126,255,.08), transparent 50%),
+    radial-gradient(700px 500px at 5% 8%, rgba(20,184,166,.05), transparent 50%),
+    radial-gradient(500px 400px at 50% 98%, rgba(251,191,36,.03), transparent 50%),
+    var(--bg);}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.02;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");}
+body>*{position:relative;z-index:1;}
+.mono{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1;}
+h2.sec{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:32px 0 12px;display:flex;align-items:center;gap:10px;}
+h2.sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent);}
+h2.sec .sec-icon{font-size:13px;}
+
+/* GLASS CARD */
+.glass{background:rgba(27,34,53,.72);backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-card);position:relative;overflow:hidden;}
+.glass::before{content:'';position:absolute;inset:0;border-radius:var(--r);background:linear-gradient(135deg,rgba(255,255,255,.03),transparent 50%);pointer-events:none;}
+
+/* ONBOARDING */
+.onboard{position:fixed;inset:0;z-index:200;background:rgba(11,15,26,.98);backdrop-filter:blur(28px);display:flex;align-items:center;justify-content:center;padding:24px;}
+.onboard.hide{display:none;}
+.onboard .card{max-width:420px;text-align:center;animation:fadeup .7s var(--spring);}
+@keyframes fadeup{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:none}}
+.onboard .logo{font-size:56px;margin-bottom:14px;filter:drop-shadow(0 0 36px rgba(74,126,255,.4));animation:logoFloat 3s ease-in-out infinite;}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.onboard h1{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:800;margin:0 0 10px;
+  background:linear-gradient(100deg,#EAEDF5 15%,var(--accent) 55%,var(--teal) 90%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.02em;}
+.onboard p{color:var(--muted);font-size:14.5px;line-height:1.7;margin:0 0 24px;}
+.onboard .steps{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px 20px;margin-bottom:24px;}
+.onboard .steps h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 12px;}
+.onboard .steps li{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:8px;list-style:none;padding-left:24px;position:relative;}
+.onboard .steps li::before{content:'';position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.6;}
+.onboard button{border-radius:99px;border:none;background:linear-gradient(135deg,var(--accent),var(--teal));color:#0B0F1A;font-weight:700;
+  padding:15px 40px;font-size:15px;cursor:pointer;font-family:'Space Grotesk',sans-serif;box-shadow:0 8px 32px rgba(74,126,255,.35);transition:transform .2s var(--spring);}
+.onboard button:active{transform:scale(.95);}
+
+/* TOP BAR */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;}
+.topbar .chip{background:rgba(20,25,39,.85);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
+.topbar .chip .lbl{font-size:8px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;font-weight:500;}
+.topbar .chip.held{color:var(--teal);border-color:rgba(20,184,166,.18);}
+.topbar .chip.drift{color:var(--coral);border-color:rgba(255,94,58,.18);}
+
+/* IDENTITY LINE */
+.identity{text-align:center;margin:14px 0 4px;padding:0 16px;font-size:13px;color:var(--accent);font-weight:500;line-height:1.5;min-height:20px;font-style:italic;letter-spacing:.01em;transition:opacity .4s;}
+.identity::before{content:'I am someone who ';color:var(--faint);font-style:normal;font-weight:400;}
+
+/* IDEAL DAY TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:8px;}
+.tl-block{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);transition:all .25s var(--ease-out);cursor:pointer;}
+.tl-block:active{transform:scale(.98);}
+.tl-block.held{border-color:rgba(34,197,94,.3);background:linear-gradient(135deg,var(--card),rgba(34,197,94,.04));}
+.tl-time{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);min-width:52px;padding-top:1px;}
+.tl-body{flex:1;min-width:0;}
+.tl-label{font-size:14px;font-weight:600;color:var(--text);line-height:1.3;}
+.tl-holds{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;}
+.tl-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:all .25s var(--spring);margin-top:2px;}
+.tl-block.held .tl-check{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.tl-empty{text-align:center;padding:24px 16px;border:1px dashed var(--line);border-radius:var(--r-sm);color:var(--faint);font-size:13px;}
+.tl-empty a{color:var(--accent);cursor:pointer;}
+
+/* DAY QUALITY RING */
+.dayring{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:14px;}
+.dayring .ring{position:relative;width:64px;height:64px;flex-shrink:0;}
+.dayring .ring svg{transform:rotate(-90deg);}
+.dayring .ring .bg{fill:none;stroke:var(--surface);stroke-width:6;}
+.dayring .ring .fg{fill:none;stroke:var(--teal);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .6s var(--ease-out);filter:drop-shadow(0 0 6px rgba(20,184,166,.4));}
+.dayring .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--text);}
+.dayring .info{flex:1;}
+.dayring .info .q{font-size:16px;font-weight:700;}
+.dayring .info .s{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* CORRECTIONS QUEUE */
+.corr-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin-bottom:10px;position:relative;transition:all .25s var(--ease-out);}
+.corr-card.held-today{border-color:rgba(34,197,94,.25);}
+.corr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.corr-text{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.35;flex:1;}
+.corr-streak{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--amber);background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.18);padding:3px 9px;border-radius:99px;flex-shrink:0;}
+.corr-identity{font-size:12.5px;color:var(--accent);font-style:italic;line-height:1.5;margin-bottom:12px;padding-left:10px;border-left:2px solid var(--line2);}
+.corr-identity::before{content:'identity: ';color:var(--faint);font-style:normal;font-weight:500;}
+.corr-actions{display:flex;gap:8px;align-items:center;}
+.corr-hold-btn{flex:1;padding:10px;border-radius:var(--r-xs);border:1px solid var(--line2);background:var(--surface);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s var(--spring);display:flex;align-items:center;justify-content:center;gap:6px;}
+.corr-hold-btn:active{transform:scale(.97);}
+.corr-hold-btn.held{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.corr-grad-btn{padding:10px 14px;border-radius:var(--r-xs);border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.08);color:var(--gold);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.corr-grad-btn:active{transform:scale(.95);}
+.corr-grad-btn:disabled{opacity:.35;cursor:default;}
+.corr-retire{font-size:11px;color:var(--faint);background:none;border:none;cursor:pointer;padding:4px 6px;text-decoration:underline;}
+.corr-add{width:100%;padding:14px;border-radius:var(--r-sm);border:1px dashed var(--line2);background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
+.corr-add:active{transform:scale(.98);}
+.corr-add:disabled{opacity:.35;cursor:default;}
+.corr-cap{font-size:11px;color:var(--faint);text-align:center;margin-top:8px;}
+
+/* VERDICT PANEL */
+.verdict-toggle{display:flex;gap:8px;margin-bottom:14px;}
+.vt-btn{flex:1;padding:16px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--card);color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .25s var(--spring);text-align:center;}
+.vt-btn:active{transform:scale(.97);}
+.vt-btn.sel.match{border-color:var(--green);background:rgba(34,197,94,.08);color:var(--green);}
+.vt-btn.sel.drift{border-color:var(--coral);background:rgba(255,94,58,.08);color:var(--coral);}
+.drift-input{width:100%;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:11px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;margin-bottom:8px;transition:border-color .2s;}
+.drift-input:focus{border-color:var(--accent);}
+.drift-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.drift-row .drift-input{flex:1;margin-bottom:0;}
+.drift-make{font-size:11px;color:var(--accent);background:rgba(74,126,255,.1);border:1px solid rgba(74,126,255,.2);padding:6px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.drift-make:active{transform:scale(.94);}
+.drift-make.made{color:var(--green);background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);}
+
+/* MOOD */
+.mood-row{display:flex;justify-content:space-between;gap:6px;margin:6px 0 14px;}
+.mood-btn{flex:1;aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:24px;cursor:pointer;transition:all .25s var(--spring);display:flex;align-items:center;justify-content:center;opacity:.5;}
+.mood-btn:active{transform:scale(.9);}
+.mood-btn.sel{opacity:1;border-color:var(--accent);background:rgba(74,126,255,.1);transform:scale(1.05);}
+
+/* NOTE */
+.note-area{width:100%;min-height:72px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:12px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;resize:vertical;outline:none;line-height:1.6;transition:border-color .2s;}
+.note-area:focus{border-color:var(--accent);}
+
+/* HEATMAP */
+.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:4px;justify-content:start;min-width:max-content;padding:14px 16px;overflow-x:auto;}
+.heat .cell{width:13px;height:13px;border-radius:3px;background:var(--surface);transition:transform .15s;}
+.heat .cell.l1{background:rgba(20,184,166,.25);}
+.heat .cell.l2{background:rgba(20,184,166,.5);}
+.heat .cell.l3{background:rgba(20,184,166,.75);}
+.heat .cell.l4{background:var(--teal);}
+.heat .cell.drift{background:rgba(255,94,58,.5);}
+.heat .cell.match{background:var(--green);}
+.heat .cell.empty{background:transparent;}
+.heat-legend{display:flex;gap:6px;align-items:center;font-size:10px;color:var(--faint);padding:0 16px 4px;font-family:'JetBrains Mono',monospace;}
+.heat-legend .sw{width:10px;height:10px;border-radius:3px;}
+
+/* VERDICT LIST */
+.vl-item{padding:12px 16px;border-bottom:1px solid var(--line);}
+.vl-item:last-child{border-bottom:none;}
+.vl-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);margin-bottom:4px;}
+.vl-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:99px;margin-left:6px;}
+.vl-tag.match{color:var(--green);background:rgba(34,197,94,.1);}
+.vl-tag.drift{color:var(--coral);background:rgba(255,94,58,.1);}
+.vl-tag.none{color:var(--faint);background:var(--surface);}
+.vl-drifts{font-size:13px;color:var(--text);margin-top:4px;line-height:1.5;}
+.vl-drifts .d{display:inline-block;margin-right:6px;color:var(--coral);}
+.vl-note{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;}
+
+/* GRADUATED */
+.grad-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);}
+.grad-item:last-child{border-bottom:none;}
+.grad-icon{font-size:20px;}
+.grad-body{flex:1;}
+.grad-text{font-size:13.5px;font-weight:600;color:var(--text);}
+.grad-meta{font-size:11px;color:var(--faint);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+
+/* SETTINGS */
+.set-card{padding:16px 18px;margin-bottom:12px;}
+.set-card h3{font-size:13px;font-weight:600;margin:0 0 4px;color:var(--text);}
+.set-card .desc{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.set-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:14px 0 6px;}
+.set-input{width:100%;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .2s;}
+.set-input:focus{border-color:var(--accent);}
+.set-textarea{width:100%;min-height:70px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'Space Grotesk',sans-serif;resize:vertical;outline:none;line-height:1.6;}
+.blk-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.blk-row .blk-time{width:70px;flex-shrink:0;}
+.blk-row .blk-label{flex:1;}
+.blk-del{width:36px;height:36px;flex-shrink:0;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--faint);font-size:16px;cursor:pointer;transition:all .2s;}
+.blk-del:active{transform:scale(.9);}
+.blk-del:hover{color:var(--coral);border-color:rgba(255,94,58,.3);}
+.set-btn{padding:11px 16px;border-radius:var(--r-xs);border:1px solid var(--line2);background:var(--surface);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s var(--spring);}
+.set-btn:active{transform:scale(.97);}
+.set-btn.primary{background:linear-gradient(135deg,var(--accent),var(--teal));border:none;color:#0B0F1A;}
+.set-btn.danger{color:var(--coral);border-color:rgba(255,94,58,.2);}
+.set-btn.full{width:100%;}
+.set-row{display:flex;gap:8px;margin-top:10px;}
+.ns-row{margin-bottom:12px;}
+.ns-row .ns-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:4px;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:150;background:rgba(11,15,26,.7);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;padding:0 0 calc(var(--safe-b));}
+.modal-bg.hide{display:none;}
+.modal{width:100%;max-width:540px;background:var(--surface);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:24px 20px calc(24px + var(--safe-b));max-height:85vh;overflow-y:auto;animation:slideup .3s var(--ease-out);}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.modal h3{font-size:17px;font-weight:700;margin:0 0 6px;}
+.modal .sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
+.modal .field{margin-bottom:14px;}
+.modal .field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:6px;}
+.modal .actions{display:flex;gap:10px;margin-top:8px;}
+.modal .grab{width:36px;height:4px;border-radius:99px;background:var(--line2);margin:0 auto 16px;}
+
+/* BOTTOM NAV */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:540px;z-index:100;
+  background:rgba(11,15,26,.85);backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);
+  border-top:1px solid var(--line);padding:8px 12px calc(8px + var(--safe-b));display:flex;gap:6px;justify-content:center;}
+.nav-btn{flex:1;max-width:120px;background:none;border:none;color:var(--faint);font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:8px 4px;border-radius:14px;cursor:pointer;transition:all .25s var(--spring);display:flex;flex-direction:column;align-items:center;gap:3px;}
+.nav-btn .ico{font-size:20px;transition:transform .25s var(--spring);}
+.nav-btn.sel{color:var(--accent);}
+.nav-btn.sel .ico{transform:translateY(-2px) scale(1.1);filter:drop-shadow(0 0 8px rgba(74,126,255,.4));}
+
+.empty-state{text-align:center;padding:32px 20px;color:var(--faint);font-size:13px;line-height:1.6;}
+.empty-state .em{font-size:36px;margin-bottom:10px;opacity:.5;}
+
+.fade{animation:fadein .35s var(--ease-out);}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== SMART SUGGESTIONS ===== */
+.sugg{padding:14px 16px;margin-bottom:14px;}
+.sugg-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+.sugg-head .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sugg-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+.sugg-item:last-child{border-bottom:none;}
+.sugg-ico{font-size:18px;flex-shrink:0;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface);}
+.sugg-body{flex:1;min-width:0;}
+.sugg-text{font-size:13.5px;color:var(--text);line-height:1.4;font-weight:500;}
+.sugg-meta{font-size:11px;color:var(--faint);margin-top:2px;}
+.sugg-item.high .sugg-ico{background:rgba(255,94,58,.12);}
+.sugg-item.high .sugg-text{color:var(--coral);}
+.sugg-item.med .sugg-ico{background:rgba(255,176,32,.12);}
+.sugg-item.low .sugg-ico{background:rgba(74,126,255,.12);}
+
+/* ===== NOW INDICATOR ON TIMELINE ===== */
+.tl-block.now{border-color:var(--accent);box-shadow:0 0 0 1px rgba(74,126,255,.2),0 4px 20px rgba(74,126,255,.1);}
+.tl-block.now .tl-time{color:var(--accent);}
+.tl-now-pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:rgba(74,126,255,.12);padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;animation:pulse 2s infinite;}
+.tl-block.past{opacity:.5;}
+.tl-block.past .tl-check{opacity:.4;}
+
+/* ===== NUTRITION ===== */
+.nutri{padding:16px 18px;margin-bottom:14px;}
+.nutri-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.nutri-head h3{font-size:14px;font-weight:600;margin:0;}
+.nutri-head .edit{font-size:11px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:'Space Grotesk',sans-serif;}
+.nutri-targets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.nutri-tgt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:10px 8px;text-align:center;}
+.nutri-tgt .v{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--text);}
+.nutri-tgt .v.done{color:var(--green);}
+.nutri-tgt .l{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:3px;font-weight:600;}
+.nutri-tgt .sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.nutri-bar{height:6px;border-radius:99px;background:var(--surface);overflow:hidden;margin-bottom:14px;}
+.nutri-bar .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--green));transition:width .5s var(--ease-out);border-radius:99px;}
+.nutri-meals{margin-bottom:14px;}
+.nutri-meal-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+.nutri-meal-row:last-child{border-bottom:none;}
+.nutri-meal-ico{font-size:20px;flex-shrink:0;width:36px;height:36px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;}
+.nutri-meal-body{flex:1;min-width:0;}
+.nutri-meal-name{font-size:13px;font-weight:600;color:var(--text);}
+.nutri-meal-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.nutri-meal-del{font-size:16px;color:var(--faint);background:none;border:none;cursor:pointer;padding:4px 8px;}
+.nutri-meal-del:active{transform:scale(.9);}
+.nutri-meal-del:hover{color:var(--coral);}
+.nutri-add{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.nutri-add select{flex:1;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;}
+.nutri-add-btn{padding:10px 16px;border-radius:var(--r-xs);border:none;background:linear-gradient(135deg,var(--accent),var(--teal));color:#0B0F1A;font-weight:700;font-size:13px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:transform .2s var(--spring);}
+.nutri-add-btn:active{transform:scale(.95);}
+.nutri-empty{text-align:center;padding:14px;color:var(--faint);font-size:12px;line-height:1.5;}
+.nutri-sugg{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:10px 12px;line-height:1.5;margin-top:8px;}
+.nutri-sugg b{color:var(--text);}
+
+/* ===== DAILY ROUTINE ===== */
+.routine{padding:16px 18px;margin-bottom:14px;}
+.routine-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.routine-head h3{font-size:14px;font-weight:600;margin:0;}
+.routine-head .dow{font-size:11px;color:var(--accent);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.routine-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer;transition:all .2s var(--ease-out);}
+.routine-item:active{transform:scale(.98);}
+.routine-item:last-child{border-bottom:none;}
+.routine-ico{font-size:18px;flex-shrink:0;width:34px;height:34px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;}
+.routine-body{flex:1;min-width:0;}
+.routine-label{font-size:14px;font-weight:500;color:var(--text);transition:all .25s;}
+.routine-meta{font-size:11px;color:var(--faint);margin-top:1px;}
+.routine-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;transition:all .25s var(--spring);}
+.routine-item.done .routine-check{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.routine-item.done .routine-label{text-decoration:line-through;opacity:.45;}
+.routine-item.done .routine-ico{opacity:.4;}
+.routine-empty{text-align:center;padding:14px;color:var(--faint);font-size:13px;line-height:1.5;}
+.routine-progress{text-align:center;font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'JetBrains Mono',monospace;}
+.routine-progress .done{color:var(--green);font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div class="onboard" id="onboard">
+  <div class="card">
+    <div class="logo">✨</div>
+    <h1>Ideal Day</h1>
+    <p>Define your ideal day. Log whether you held it. Name the drifts. Work corrections until they graduate to autopilot.</p>
+    <div class="steps">
+      <h3>How it works</h3>
+      <li>Set up your <b>ideal day template</b> — the blocks that make a perfect day</li>
+      <li>Each day, tap blocks as you <b>hold them</b> — the timeline shows what's NOW</li>
+      <li><b>Daily routine</b> — household chores (laundry, trash, dishes…) scheduled by weekday</li>
+      <li><b>Smart suggestions</b> appear based on time, your drifts, and corrections</li>
+      <li>Log meals in <b>Fuel</b> — protein/calorie targets from your body profile</li>
+      <li>Tonight, write your <b>verdict</b> — did today match? Name 1–3 drifts</li>
+      <li>Turn drifts into <b>corrections</b> — work them until they graduate</li>
+    </div>
+    <button onclick="finishOnboard()">Start</button>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar" id="topbar">
+  <div class="chip" id="dateChip"><span class="lbl">Today</span><span id="dateStr">—</span></div>
+  <div class="chip held" id="heldChip"><span class="lbl">Held</span><span id="heldPct">0/0</span></div>
+</div>
+
+<!-- IDENTITY -->
+<div class="identity" id="identity"></div>
+
+<!-- TABS -->
+<div id="tab-today" class="tab"></div>
+<div id="tab-history" class="tab" style="display:none"></div>
+<div id="tab-settings" class="tab" style="display:none"></div>
+
+<!-- BOTTOM NAV -->
+<div class="nav">
+  <button class="nav-btn sel" data-tab="today" onclick="switchTab('today')"><span class="ico">☀️</span>Today</button>
+  <button class="nav-btn" data-tab="history" onclick="switchTab('history')"><span class="ico">📈</span>History</button>
+  <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')"><span class="ico">⚙️</span>Settings</button>
+</div>
+
+<!-- MODAL ROOT -->
+<div class="modal-bg hide" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+// ===== DEFAULTS =====
+const DEFAULT_BLOCKS = [
+  { id:'b1', time:'06:00', label:'Wake + light', holds:'5 min outside, no phone first' },
+  { id:'b2', time:'06:30', label:'Move', holds:'Gym or 20 min movement' },
+  { id:'b3', time:'08:30', label:'Deep work', holds:'90 min on the thing that matters' },
+  { id:'b4', time:'13:00', label:'Build block', holds:'Ship something small' },
+  { id:'b5', time:'18:00', label:'Connect', holds:'Be fully present with family' },
+  { id:'b6', time:'21:30', label:'Wind down', holds:'Phone out of bedroom, read' },
+];
+const DEFAULT_IDENTITY = [
+  'shows up every day, even when it\'s hard',
+  'protects his sleep like it\'s sacred',
+  'builds something every day, no matter how small',
+];
+const MOODS = ['😔','😕','😐','🙂','😄'];
+const GRADUATE_THRESHOLD = 7; // days held before you can graduate a correction
+const MAX_ACTIVE = 3;
+
+// ===== FOOD DATABASE (per serving, protein in g, kcal) =====
+const FOODS = [
+  { id:'eggs',     name:'4 eggs',                icon:'🥚', protein:24, kcal:280, tag:'breakfast' },
+  { id:'oats',     name:'Oats + whey',           icon:'🥣', protein:30, kcal:380, tag:'breakfast' },
+  { id:'yogurt',   name:'Greek yogurt (250g)',   icon:'🥛', protein:25, kcal:150, tag:'snack' },
+  { id:'chicken',  name:'Chicken breast (200g)', icon:'🍗', protein:62, kcal:330, tag:'lunch' },
+  { id:'rice',     name:'Rice (1 cup cooked)',   icon:'🍚', protein:4,  kcal:200, tag:'lunch' },
+  { id:'salmon',   name:'Salmon (150g)',         icon:'🐟', protein:34, kcal:312, tag:'dinner' },
+  { id:'beef',     name:'Lean beef (150g)',      icon:'🥩', protein:38, kcal:250, tag:'dinner' },
+  { id:'tofu',     name:'Tofu (200g)',           icon:'🍱', protein:32, kcal:280, tag:'dinner' },
+  { id:'whey',     name:'Whey shake',            icon:'🥤', protein:25, kcal:120, tag:'snack' },
+  { id:'nuts',     name:'Almonds (30g)',         icon:'🥜', protein:6,  kcal:174, tag:'snack' },
+  { id:'banana',   name:'Banana',                icon:'🍌', protein:1,  kcal:89,  tag:'snack' },
+  { id:'tuna',     name:'Tuna can (100g)',       icon:'🐟', protein:25, kcal:116, tag:'lunch' },
+];
+
+// ===== DEFAULT ROUTINE (household + life admin) =====
+// days: array of weekday numbers (0=Sun, 1=Mon, ... 6=Sat). Empty = every day.
+const DEFAULT_ROUTINE = [
+  { id:'r1', icon:'🧺', label:'Laundry',          days:[1,4] },     // Mon, Thu
+  { id:'r2', icon:'🗑️', label:'Take out trash',   days:[2,5] },     // Tue, Fri
+  { id:'r3', icon:'🍽️', label:'Do dishes',        days:[] },        // every day
+  { id:'r4', icon:'🧹', label:'Quick clean (15m)', days:[3,6] },    // Wed, Sat
+  { id:'r5', icon:'🛒', label:'Groceries',         days:[6] },       // Sat
+  { id:'r6', icon:'📧', label:'Inbox to zero',     days:[1,2,3,4,5] }, // weekdays
+  { id:'r7', icon:'🪴', label:'Water plants',      days:[1,3,5] },  // Mon, Wed, Fri
+  { id:'r8', icon:'💳', label:'Check finances',    days:[0] },       // Sun
+];
+const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ===== STATE =====
+let mem = {
+  schema:3, onboarded:false,
+  idealDay:{ blocks: DEFAULT_BLOCKS.map(b=>({...b})) },
+  identity: DEFAULT_IDENTITY.slice(),
+  northStar:{ ten:'', twenty:'', thirty:'' },
+  days:{},
+  queue:[],
+  profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' },
+  routine: DEFAULT_ROUTINE.map(r=>({...r})),
+};
+let curTab = 'today';
+
+// ===== STORAGE =====
+function load(){
+  try{
+    const raw = localStorage.getItem('idealDay');
+    if(raw){
+      const p = JSON.parse(raw);
+      mem = { ...mem, ...p };
+      if(!mem.idealDay) mem.idealDay = { blocks: DEFAULT_BLOCKS.map(b=>({...b})) };
+      if(!mem.idealDay.blocks) mem.idealDay.blocks = [];
+      if(!mem.identity) mem.identity = [];
+      if(!mem.northStar) mem.northStar = {};
+      if(!mem.days) mem.days = {};
+      if(!mem.queue) mem.queue = [];
+      if(!mem.profile) mem.profile = { bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' };
+      if(!mem.routine) mem.routine = DEFAULT_ROUTINE.map(r=>({...r}));
+      // ensure each day has a meals array and routineDone
+      Object.values(mem.days).forEach(dd=>{
+        if(!dd.meals) dd.meals=[];
+        if(!dd.routineDone) dd.routineDone={};
+      });
+    }
+  }catch(e){ console.warn('load failed', e); }
+}
+function save(){ localStorage.setItem('idealDay', JSON.stringify(mem)); }
+
+// ===== DATE HELPERS =====
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function dayKey(d){ return d.toISOString().slice(0,10); }
+function prettyDate(key){
+  const d = new Date(key+'T00:00:00');
+  return d.toLocaleDateString('en-US',{ weekday:'short', month:'short', day:'numeric' });
+}
+function dayObj(key){
+  if(!mem.days[key]) mem.days[key] = { held:{}, mood:0, note:'', verdict:'', drifts:[], corrections:{}, meals:[], routineDone:{} };
+  if(!mem.days[key].meals) mem.days[key].meals = [];
+  if(!mem.days[key].routineDone) mem.days[key].routineDone = {};
+  return mem.days[key];
+}
+
+// ===== ONBOARD =====
+function finishOnboard(){ mem.onboarded = true; save(); document.getElementById('onboard').classList.add('hide'); renderAll(); }
+
+// ===== TABS =====
+function switchTab(t){
+  curTab = t;
+  document.querySelectorAll('.tab').forEach(el=>el.style.display='none');
+  document.getElementById('tab-'+t).style.display='block';
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('sel', b.dataset.tab===t));
+  renderTab(t);
+}
+
+// ===== RENDER =====
+function renderAll(){
+  const tk = todayKey();
+  document.getElementById('dateStr').textContent = prettyDate(tk);
+  renderIdentity();
+  renderTopBar();
+  renderTab(curTab);
+}
+
+function renderIdentity(){
+  const el = document.getElementById('identity');
+  const ids = mem.identity || [];
+  if(!ids.length){ el.textContent=''; return; }
+  // rotate daily
+  const idx = Math.floor(Date.now()/86400000) % ids.length;
+  el.textContent = ids[idx];
+}
+
+function renderTopBar(){
+  const tk = todayKey();
+  const d = dayObj(tk);
+  const blocks = mem.idealDay.blocks || [];
+  const heldCount = blocks.filter(b=>d.held[b.id]).length;
+  const chip = document.getElementById('heldChip');
+  document.getElementById('heldPct').textContent = blocks.length ? heldCount+'/'+blocks.length : '0/0';
+  chip.classList.toggle('held', heldCount>0);
+  chip.classList.toggle('drift', false);
+}
+
+function renderTab(t){
+  if(t==='today') renderToday();
+  else if(t==='history') renderHistory();
+  else if(t==='settings') renderSettings();
+}
+
+// ===== TIME HELPERS =====
+function nowMinutes(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function blockMinutes(b){ const [h,m]=b.time.split(':').map(Number); return h*60+m; }
+
+// ===== NUTRITION CALCULATOR (Mifflin-St Jeor) =====
+function computeNutrition(){
+  const p = mem.profile || {};
+  const bw = p.bodyweight||75, h = p.height||175, age = p.age||30, sex = p.sex||'male';
+  const act = p.activity||'moderate', goal = p.goal||'gain';
+  const actFactor = {sedentary:1.2, light:1.375, moderate:1.55, active:1.725, very:1.9}[act] || 1.55;
+  // BMR
+  let bmr;
+  if(sex==='male') bmr = 10*bw + 6.25*h - 5*age + 5;
+  else bmr = 10*bw + 6.25*h - 5*age - 161;
+  let tdee = bmr * actFactor;
+  // Goal adjustment
+  let calTarget = tdee;
+  if(goal==='cut') calTarget = tdee - 400;
+  else if(goal==='gain') calTarget = tdee + 300;
+  // Protein: 2.0g/kg gain, 1.8 cut, 1.6 maintain
+  let proteinPerKg = goal==='gain'?2.0 : goal==='cut'?1.8 : 1.6;
+  let proteinTarget = Math.round(bw * proteinPerKg);
+  calTarget = Math.round(calTarget);
+  return { bmr:Math.round(bmr), tdee:Math.round(tdee), calTarget, proteinTarget, proteinPerKg };
+}
+
+// ===== SMART SUGGESTIONS ENGINE (rule-based, derived from data) =====
+function computeSuggestions(){
+  const tk = todayKey();
+  const d = dayObj(tk);
+  const blocks = (mem.idealDay.blocks||[]).slice().sort((a,b)=>blockMinutes(a)-blockMinutes(b));
+  const now = nowMinutes();
+  const active = (mem.queue||[]).filter(c=>c.status==='active');
+  const sugg = [];
+
+  // 1. Current / next ideal block
+  if(blocks.length){
+    const current = blocks.find(b=>{ const s=blockMinutes(b); return now>=s && now<s+120; });
+    const upcoming = blocks.find(b=>blockMinutes(b)>now);
+    if(current){
+      const held = !!d.held[current.id];
+      if(!held) sugg.push({ ico:'⏰', text:`Now: ${current.label} — ${current.holds||''}`, meta:'Your ideal day says this block is active', pri:'high' });
+    } else if(upcoming){
+      const mins = blockMinutes(upcoming)-now;
+      const inH = Math.floor(mins/60), inM = mins%60;
+      sugg.push({ ico:'👉', text:`Next up: ${upcoming.label} in ${inH>0?inH+'h ':''}${inM}m`, meta:upcoming.holds||'', pri:'low' });
+    } else {
+      // all blocks passed
+      const unheld = blocks.filter(b=>!d.held[b.id]);
+      if(unheld.length) sugg.push({ ico:'🌙', text:`${unheld.length} ideal block${unheld.length>1?'s':''} unheld today`, meta:unheld.map(b=>b.label).join(', '), pri:'med' });
+    }
+  }
+
+  // 2. Correction streak risk (late in day, not held)
+  active.forEach(c=>{
+    const heldToday = !!d.corrections[c.id];
+    if(!heldToday && now >= 20*60){ // after 8pm
+      sugg.push({ ico:'🔥', text:`"${c.text}" not held today — streak at risk`, meta:c.identityLine||'Mark it before bed', pri:'high' });
+    } else if(!heldToday && now >= 15*60){
+      sugg.push({ ico:'🎯', text:`Hold "${c.text}" today`, meta:c.identityLine||'', pri:'med' });
+    }
+  });
+
+  // 3. Most-drifted block (from last 14 days of verdicts)
+  const driftCounts = {};
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    if(dd.verdict==='drift' && dd.drifts){
+      dd.drifts.filter(x=>x).forEach(dr=>{
+        // fuzzy match drift text to a block label
+        const dl = dr.toLowerCase();
+        const match = blocks.find(b=>dl.includes(b.label.toLowerCase()));
+        if(match) driftCounts[match.id] = (driftCounts[match.id]||0)+1;
+      });
+    }
+  });
+  const topDrift = Object.entries(driftCounts).sort((a,b)=>b[1]-a[1])[0];
+  if(topDrift && topDrift[1]>=2){
+    const blk = blocks.find(b=>b.id===topDrift[0]);
+    if(blk && !d.held[blk.id]) sugg.push({ ico:'📉', text:`"${blk.label}" drifts most for you (${topDrift[1]}× lately)`, meta:'Make it a correction tonight if it drifts again', pri:'med' });
+  }
+
+  // 4. Nutrition: protein behind schedule
+  const nut = computeNutrition();
+  const meals = d.meals||[];
+  const proteinLogged = meals.reduce((s,m)=>s+(m.protein||0),0);
+  const proteinLeft = nut.proteinTarget - proteinLogged;
+  const dayProgress = now/(24*60);
+  const expectedProtein = nut.proteinTarget * dayProgress;
+  if(proteinLeft > 0 && proteinLogged < expectedProtein * 0.7 && now > 10*60 && now < 21*60){
+    const deficit = Math.round(expectedProtein - proteinLogged);
+    sugg.push({ ico:'🥩', text:`Protein behind: ${deficit}g behind pace (${proteinLogged}/${nut.proteinTarget}g)`, meta:'Add a high-protein meal — see Fuel below', pri:'med' });
+  }
+
+  // 5. Verdict reminder (evening, not done)
+  if(now >= 20*60 && !d.verdict){
+    sugg.push({ ico:'🌙', text:`Write tonight's verdict — did the day match the ideal?`, meta:'Takes 30 seconds. This is the data that powers everything.', pri:'high' });
+  }
+
+  // 6. Never miss twice (yesterday drifted, today not started)
+  const yK = new Date(); yK.setDate(yK.getDate()-1);
+  const yEntry = mem.days[dayKey(yK)];
+  if(yEntry && yEntry.verdict==='drift' && blocks.filter(b=>d.held[b.id]).length===0 && now > 9*60){
+    sugg.push({ ico:'⚡', text:`Yesterday drifted — today, hold at least one block`, meta:'Never miss twice. One block is enough to break the slide.', pri:'high' });
+  }
+
+  // 7. Routine items pending (afternoon/evening)
+  const rItems = todaysRoutine();
+  const rDone = rItems.filter(r=>d.routineDone[r.id]).length;
+  const rLeft = rItems.length - rDone;
+  if(rLeft > 0 && now >= 16*60){
+    const next = rItems.find(r=>!d.routineDone[r.id]);
+    sugg.push({ ico:next.icon||'🧹', text:`${rLeft} routine task${rLeft>1?'s':''} pending: ${next.label}`, meta:rItems.filter(r=>!d.routineDone[r.id]).map(r=>r.label).join(', '), pri:'med' });
+  }
+
+  // sort by priority
+  const order = {high:0, med:1, low:2};
+  sugg.sort((a,b)=>order[a.pri]-order[b.pri]);
+  return sugg.slice(0,5);
+}
+
+// ===== NUTRITION RENDER =====
+function renderNutrition(d){
+  const nut = computeNutrition();
+  const meals = d.meals||[];
+  const proteinLogged = meals.reduce((s,m)=>s+(m.protein||0),0);
+  const calLogged = meals.reduce((s,m)=>s+(m.kcal||0),0);
+  const proteinLeft = Math.max(0, nut.proteinTarget - proteinLogged);
+  const calLeft = Math.max(0, nut.calTarget - calLogged);
+  const proteinPct = nut.proteinTarget ? Math.min(1, proteinLogged/nut.proteinTarget) : 0;
+  const calPct = nut.calTarget ? Math.min(1, calLogged/nut.calTarget) : 0;
+
+  // smart food suggestion: pick foods to fill remaining protein
+  let foodSugg = '';
+  if(proteinLeft > 5){
+    // greedily pick foods by protein density to fill the gap
+    const pool = FOODS.slice().sort((a,b)=>(b.protein/b.kcal)-(a.protein/a.kcal));
+    const picks = [];
+    let remaining = proteinLeft;
+    for(const f of pool){
+      if(remaining<=0) break;
+      if(f.protein<=0) continue;
+      picks.push(f);
+      remaining -= f.protein;
+    }
+    if(picks.length){
+      const names = picks.slice(0,3).map(f=>`${f.icon} ${f.name} (${f.protein}g)`).join(' + ');
+      foodSugg = `<div class="nutri-sugg">To hit your protein target: <b>${names}</b> ≈ ${proteinLeft}g remaining</div>`;
+    }
+  }
+
+  // meal log
+  let mealHtml = '';
+  if(meals.length){
+    mealHtml = `<div class="nutri-meals">`;
+    meals.forEach((m,i)=>{
+      mealHtml += `<div class="nutri-meal-row">
+        <div class="nutri-meal-ico">${m.icon||'🍽️'}</div>
+        <div class="nutri-meal-body"><div class="nutri-meal-name">${esc(m.name)}</div><div class="nutri-meal-meta">${m.protein}g protein · ${m.kcal} kcal</div></div>
+        <button class="nutri-meal-del" onclick="removeMeal(${i})">×</button>
+      </div>`;
+    });
+    mealHtml += `</div>`;
+  } else {
+    mealHtml = `<div class="nutri-empty">No meals logged today. Add one below.</div>`;
+  }
+
+  // food picker
+  const foodOpts = FOODS.map(f=>`<option value="${f.id}">${f.icon} ${f.name} — ${f.protein}g / ${f.kcal}kcal</option>`).join('');
+
+  return `
+  <h2 class="sec"><span class="sec-icon">🥩</span>Fuel — today's targets</h2>
+  <div class="glass nutri">
+    <div class="nutri-head">
+      <h3>${nut.proteinTarget}g protein · ${nut.calTarget} kcal</h3>
+      <button class="edit" onclick="switchTab('settings')">edit profile</button>
+    </div>
+    <div class="nutri-targets">
+      <div class="nutri-tgt"><div class="v ${proteinPct>=1?'done':''}">${proteinLogged}<span style="font-size:11px;color:var(--faint)">/${nut.proteinTarget}g</span></div><div class="l">Protein</div><div class="sub">${proteinLeft}g left</div></div>
+      <div class="nutri-tgt"><div class="v ${calPct>=1?'done':''}">${calLogged}<span style="font-size:11px;color:var(--faint)">/${nut.calTarget}</span></div><div class="l">Calories</div><div class="sub">${calLeft} left</div></div>
+      <div class="nutri-tgt"><div class="v">${meals.length}</div><div class="l">Meals</div><div class="sub">logged</div></div>
+    </div>
+    <div class="nutri-bar"><div class="fill" style="width:${proteinPct*100}%"></div></div>
+    ${mealHtml}
+    <div class="nutri-add">
+      <select id="foodSelect">${foodOpts}</select>
+      <button class="nutri-add-btn" onclick="addMeal()">+ Add</button>
+    </div>
+    ${foodSugg}
+  </div>`;
+}
+
+// ===== MEAL ACTIONS =====
+function addMeal(){
+  const sel = document.getElementById('foodSelect');
+  const f = FOODS.find(x=>x.id===sel.value);
+  if(!f) return;
+  const d = dayObj(todayKey());
+  d.meals.push({ id:f.id, name:f.name, icon:f.icon, protein:f.protein, kcal:f.kcal });
+  save();
+  renderToday();
+}
+function removeMeal(i){
+  const d = dayObj(todayKey());
+  d.meals.splice(i,1);
+  save();
+  renderToday();
+}
+
+// ===== ROUTINE (household + life admin) =====
+function todaysRoutine(){
+  const dow = new Date().getDay();
+  return (mem.routine||[]).filter(r => !r.days || r.days.length===0 || r.days.includes(dow));
+}
+
+function renderRoutine(d){
+  const items = todaysRoutine();
+  if(!items.length){
+    return `<h2 class="sec"><span class="sec-icon">🧹</span>Daily routine</h2>
+    <div class="glass routine"><div class="routine-empty">No routine items scheduled for today. Add some in Settings.</div></div>`;
+  }
+  const doneCount = items.filter(r => d.routineDone[r.id]).length;
+  const dowName = WEEKDAYS[new Date().getDay()];
+  let html = `<h2 class="sec"><span class="sec-icon">🧹</span>Daily routine</h2>`;
+  html += `<div class="glass routine">`;
+  html += `<div class="routine-head"><h3>Today's chores</h3><span class="dow">${dowName}</span></div>`;
+  html += `<div class="routine-progress"><span class="done">${doneCount}</span> / ${items.length} done</div>`;
+  items.forEach(r => {
+    const done = !!d.routineDone[r.id];
+    const dayLabel = !r.days || r.days.length===0 ? 'every day' :
+      r.days.length===1 ? WEEKDAYS[r.days[0]] :
+      r.days.length===2 ? r.days.map(x=>WEEKDAYS[x]).join(' + ') :
+      r.days.length===5 && r.days.join(',')==='1,2,3,4,5' ? 'weekdays' :
+      r.days.length===2 && r.days.join(',')==='0,6' ? 'weekends' :
+      r.days.map(x=>WEEKDAYS[x]).join(', ');
+    html += `<div class="routine-item ${done?'done':''}" onclick="toggleRoutine('${r.id}')">
+      <div class="routine-ico">${r.icon||'☑️'}</div>
+      <div class="routine-body"><div class="routine-label">${esc(r.label)}</div><div class="routine-meta">${dayLabel}</div></div>
+      <div class="routine-check">✓</div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function toggleRoutine(id){
+  const d = dayObj(todayKey());
+  d.routineDone[id] = !d.routineDone[id];
+  save();
+  renderToday();
+}
+
+// ===== TODAY TAB =====
+function renderToday(){
+  const tk = todayKey();
+  const d = dayObj(tk);
+  const blocks = mem.idealDay.blocks || [];
+  let html = '';
+
+  // Day quality ring
+  const heldCount = blocks.filter(b=>d.held[b.id]).length;
+  const pct = blocks.length ? heldCount/blocks.length : 0;
+  const circ = 2*Math.PI*26;
+  const offset = circ*(1-pct);
+  let quality = 'Not started';
+  if(blocks.length){
+    if(pct===1) quality='Ideal day held';
+    else if(pct>=0.66) quality='Strong day';
+    else if(pct>=0.33) quality='Partial day';
+    else if(pct>0) quality='Rough day';
+    else quality='Nothing held yet';
+  }
+  html += `<div class="glass dayring">
+    <div class="ring">
+      <svg width="64" height="64"><circle class="bg" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg>
+      <div class="pct">${Math.round(pct*100)}<span style="font-size:9px">%</span></div>
+    </div>
+    <div class="info"><div class="q">${quality}</div><div class="s">${heldCount} of ${blocks.length} ideal blocks held</div></div>
+  </div>`;
+
+  // Smart suggestions (rule-based, derived from data)
+  const sugg = computeSuggestions();
+  if(sugg.length){
+    html += `<div class="glass sugg">
+      <div class="sugg-head"><span class="dot"></span>Smart suggestions</div>`;
+    sugg.forEach(s=>{
+      html += `<div class="sugg-item ${s.pri}">
+        <div class="sugg-ico">${s.ico}</div>
+        <div class="sugg-body"><div class="sugg-text">${esc(s.text)}</div>${s.meta?`<div class="sugg-meta">${esc(s.meta)}</div>`:''}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Ideal day timeline
+  html += `<h2 class="sec"><span class="sec-icon">🗓️</span>Your ideal day</h2>`;
+  if(!blocks.length){
+    html += `<div class="tl-empty">No ideal-day blocks yet. <a onclick="switchTab('settings')">Define your ideal day →</a></div>`;
+  } else {
+    const now = nowMinutes();
+    const sorted = blocks.slice().sort((a,b)=>blockMinutes(a)-blockMinutes(b));
+    // find current block (within 2h of its start)
+    const currentId = sorted.find(b=>{ const s=blockMinutes(b); return now>=s && now<s+120; })?.id;
+    html += `<div class="timeline">`;
+    sorted.forEach(b=>{
+      const held = !!d.held[b.id];
+      const bm = blockMinutes(b);
+      const isNow = b.id===currentId;
+      const isPast = !isNow && bm < now && !held;
+      const cls = (held?'held ':'') + (isNow?'now ':'') + (isPast?'past ':'');
+      html += `<div class="tl-block ${cls}" onclick="toggleBlock('${b.id}')">
+        <div class="tl-time">${b.time}${isNow?'<span class="tl-now-pill">NOW</span>':''}</div>
+        <div class="tl-body"><div class="tl-label">${b.label}</div><div class="tl-holds">${b.holds||''}</div></div>
+        <div class="tl-check">✓</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Daily routine (household + life admin)
+  html += renderRoutine(d);
+
+  // Corrections queue
+  html += `<h2 class="sec"><span class="sec-icon">🎯</span>Active corrections</h2>`;
+  const active = (mem.queue||[]).filter(c=>c.status==='active');
+  if(active.length){
+    active.forEach(c=>{
+      const heldToday = !!d.corrections[c.id];
+      const streak = corrStreak(c, tk);
+      const canGrad = streak >= GRADUATE_THRESHOLD;
+      html += `<div class="corr-card ${heldToday?'held-today':''}">
+        <div class="corr-head">
+          <div class="corr-text">${c.text}</div>
+          <div class="corr-streak">${streak}🔥</div>
+        </div>
+        <div class="corr-identity">${c.identityLine}</div>
+        <div class="corr-actions">
+          <button class="corr-hold-btn ${heldToday?'held':''}" onclick="toggleCorrHold('${c.id}')">${heldToday?'✓ Held today':'Mark held'}</button>
+          <button class="corr-grad-btn" ${canGrad?'':'disabled'} onclick="graduateCorr('${c.id}')">${canGrad?'Graduate ✓':'Graduate in '+(GRADUATE_THRESHOLD-streak)+'d'}</button>
+        </div>
+        <div style="margin-top:8px;text-align:right"><button class="corr-retire" onclick="retireCorr('${c.id}')">retire</button></div>
+      </div>`;
+    });
+  } else {
+    html += `<div class="empty-state"><div class="em">🎯</div>No active corrections. When you notice a drift tonight, turn it into one.</div>`;
+  }
+  const slotsLeft = MAX_ACTIVE - active.length;
+  html += `<button class="corr-add" ${slotsLeft<=0?'disabled':''} onclick="openAddCorr()">${slotsLeft<=0?'Queue full — graduate one first':'+ Add correction'}</button>`;
+  html += `<div class="corr-cap">${active.length}/${MAX_ACTIVE} active · graduate after ${GRADUATE_THRESHOLD} days held</div>`;
+
+  // Fuel / nutrition
+  html += renderNutrition(d);
+
+  // Nightly verdict
+  html += `<h2 class="sec"><span class="sec-icon">🌙</span>Tonight's verdict</h2>`;
+  html += `<div class="glass" style="padding:18px">`;
+  html += `<div class="verdict-toggle">
+    <button class="vt-btn ${d.verdict==='match'?'sel match':''}" onclick="setVerdict('match')">✓ Matched ideal</button>
+    <button class="vt-btn ${d.verdict==='drift'?'sel drift':''}" onclick="setVerdict('drift')">↗ Drifted</button>
+  </div>`;
+  if(d.verdict==='drift'){
+    html += `<div class="set-label">Name the 1–3 drifts</div>`;
+    for(let i=0;i<3;i++){
+      const val = d.drifts[i]||'';
+      const made = d.drifts[i] && corrExistsFor(val);
+      html += `<div class="drift-row">
+        <input class="drift-input" placeholder="What drifted? (e.g. phone in bed after 11pm)" value="${esc(val)}" oninput="updateDrift(${i},this.value)">
+        ${val.trim() ? `<button class="drift-make ${made?'made':''}" onclick="makeCorrFromDrift(${i})">${made?'✓ correction':'→ correction'}</button>` : ''}
+      </div>`;
+    }
+  }
+  html += `<div class="set-label">Mood</div>`;
+  html += `<div class="mood-row">`;
+  MOODS.forEach((m,i)=>{
+    html += `<button class="mood-btn ${d.mood===(i+1)?'sel':''}" onclick="setMood(${i+1})">${m}</button>`;
+  });
+  html += `</div>`;
+  html += `<div class="set-label">Note</div>`;
+  html += `<textarea class="note-area" placeholder="One win, one lesson..." oninput="updateNote(this.value)">${esc(d.note)}</textarea>`;
+  html += `</div>`;
+
+  document.getElementById('tab-today').innerHTML = html;
+  document.getElementById('tab-today').classList.add('fade');
+  setTimeout(()=>document.getElementById('tab-today').classList.remove('fade'),400);
+}
+
+// ===== HISTORY TAB =====
+function renderHistory(){
+  let html = '';
+  const tk = todayKey();
+
+  // Heatmap
+  html += `<h2 class="sec"><span class="sec-icon">🔥</span>Consistency</h2>`;
+  html += `<div class="glass" style="padding:0;overflow:hidden">`;
+  html += `<div class="heat" id="heat"></div>`;
+  html += `<div class="heat-legend">
+    <span>less</span>
+    <span class="sw" style="background:var(--surface)"></span>
+    <span class="sw" style="background:rgba(20,184,166,.25)"></span>
+    <span class="sw" style="background:rgba(20,184,166,.5)"></span>
+    <span class="sw" style="background:rgba(20,184,166,.75)"></span>
+    <span class="sw" style="background:var(--teal)"></span>
+    <span>more</span>
+    <span style="margin-left:10px" class="sw" style="background:var(--green)"></span>
+    <span style="color:var(--green)">= matched ideal</span>
+  </div>`;
+  html += `</div>`;
+
+  // Recent verdicts
+  html += `<h2 class="sec"><span class="sec-icon">📝</span>Recent verdicts</h2>`;
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,10);
+  if(!keys.length){
+    html += `<div class="glass empty-state"><div class="em">📝</div>No verdicts yet. Log tonight's to start.</div>`;
+  } else {
+    html += `<div class="glass" style="padding:0;overflow:hidden">`;
+    keys.forEach(k=>{
+      const d = mem.days[k];
+      const tagClass = d.verdict==='match'?'match':d.verdict==='drift'?'drift':'none';
+      const tagText = d.verdict==='match'?'MATCH':d.verdict==='drift'?'DRIFT':'—';
+      html += `<div class="vl-item">
+        <div class="vl-date">${prettyDate(k)}<span class="vl-tag ${tagClass}">${tagText}</span></div>`;
+      if(d.drifts && d.drifts.filter(x=>x).length){
+        html += `<div class="vl-drifts">${d.drifts.filter(x=>x).map(x=>`<span class="d">↗ ${esc(x)}</span>`).join('')}</div>`;
+      }
+      if(d.note) html += `<div class="vl-note">${esc(d.note)}</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Graduated corrections
+  html += `<h2 class="sec"><span class="sec-icon">🎓</span>Graduated to autopilot</h2>`;
+  const graduated = (mem.queue||[]).filter(c=>c.status==='autopilot');
+  if(!graduated.length){
+    html += `<div class="glass empty-state"><div class="em">🎓</div>Nothing graduated yet. Hold a correction ${GRADUATE_THRESHOLD} days, then graduate it.</div>`;
+  } else {
+    html += `<div class="glass" style="padding:0;overflow:hidden">`;
+    graduated.forEach(c=>{
+      const days = (c.heldDates||[]).length;
+      html += `<div class="grad-item">
+        <div class="grad-icon">🎓</div>
+        <div class="grad-body"><div class="grad-text">${esc(c.text)}</div><div class="grad-meta">held ${days} days · graduated ${c.graduatedDate||'—'}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('tab-history').innerHTML = html;
+  document.getElementById('tab-history').classList.add('fade');
+  setTimeout(()=>document.getElementById('tab-history').classList.remove('fade'),400);
+  renderHeatmap();
+}
+
+function renderHeatmap(){
+  const el = document.getElementById('heat');
+  if(!el) return;
+  const blocks = mem.idealDay.blocks || [];
+  const total = blocks.length || 1;
+  // 12 weeks = 84 days, ending today
+  const today = new Date();
+  const days = [];
+  for(let i=83;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    days.push(d);
+  }
+  // align to start on Sunday: find first Sunday
+  let html = '';
+  const firstDow = days[0].getDay();
+  for(let i=0;i<firstDow;i++) html += `<div class="cell empty"></div>`;
+  days.forEach(d=>{
+    const k = dayKey(d);
+    const entry = mem.days[k];
+    if(!entry){ html += `<div class="cell"></div>`; return; }
+    if(entry.verdict==='match'){ html += `<div class="cell match"></div>`; return; }
+    const held = blocks.filter(b=>entry.held[b.id]).length;
+    const pct = held/total;
+    let lvl = '';
+    if(pct>0){ lvl = pct<=0.25?'l1':pct<=0.5?'l2':pct<=0.75?'l3':'l4'; }
+    if(entry.verdict==='drift' && !lvl) lvl = 'drift';
+    html += `<div class="cell ${lvl}" title="${k}: ${held}/${blocks.length} held"></div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ===== SETTINGS TAB =====
+function renderSettings(){
+  let html = '';
+
+  // Ideal day editor
+  html += `<h2 class="sec"><span class="sec-icon">🗓️</span>Ideal day template</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">The blocks that make a perfect day. This is your reference — you log drift from it each evening.</div>`;
+  (mem.idealDay.blocks||[]).forEach((b,i)=>{
+    html += `<div class="blk-row">
+      <input class="set-input blk-time" value="${esc(b.time)}" onchange="editBlock(${i},'time',this.value)" placeholder="06:00">
+      <input class="set-input blk-label" value="${esc(b.label)}" onchange="editBlock(${i},'label',this.value)" placeholder="Label">
+      <button class="blk-del" onclick="delBlock(${i})">×</button>
+    </div>
+    <input class="set-input" style="margin-bottom:10px" value="${esc(b.holds||'')}" onchange="editBlock(${i},'holds',this.value)" placeholder="What it holds (e.g. 90 min deep work)">`;
+  });
+  html += `<button class="set-btn full" onclick="addBlock()">+ Add block</button>`;
+  html += `</div>`;
+
+  // Daily routine editor (household + life admin)
+  html += `<h2 class="sec"><span class="sec-icon">🧹</span>Daily routine</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Recurring household and life-admin tasks. Schedule by day of week. Empty = every day. Tap the day chips to toggle.</div>`;
+  (mem.routine||[]).forEach((r,i)=>{
+    html += `<div class="blk-row">
+      <input class="set-input blk-time" style="width:50px;text-align:center;font-size:18px" value="${esc(r.icon||'☑️')}" onchange="editRoutine(${i},'icon',this.value)" maxlength="2" placeholder="🧹">
+      <input class="set-input blk-label" value="${esc(r.label)}" onchange="editRoutine(${i},'label',this.value)" placeholder="Task name">
+      <button class="blk-del" onclick="delRoutine(${i})">×</button>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">`;
+    WEEKDAYS.forEach((wd,di)=>{
+      const on = r.days && r.days.includes(di);
+      html += `<button class="rday ${on?'on':''}" onclick="toggleRoutineDay(${i},${di})">${wd}</button>`;
+    });
+    html += `</div>`;
+  });
+  html += `<button class="set-btn full" onclick="addRoutine()">+ Add routine task</button>`;
+  html += `</div>`;
+  html += `<style>.rday{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--faint);font-size:11px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;}.rday.on{background:var(--accent);border-color:transparent;color:#0B0F1A;}.rday:active{transform:scale(.92);}</style>`;
+
+  // Identity
+  html += `<h2 class="sec"><span class="sec-icon">🧬</span>Identity statements</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">"I am someone who…" — the person you're becoming. Rotates daily on the Today screen. One per line.</div>
+    <textarea class="set-textarea" id="identityInput" placeholder="shows up every day, even when it's hard&#10;protects his sleep like it's sacred&#10;builds something every day, no matter how small">${esc((mem.identity||[]).join('\n'))}</textarea>
+    <button class="set-btn full" style="margin-top:10px" onclick="saveIdentity()">Save identity</button>
+  </div>`;
+
+  // North Star
+  html += `<h2 class="sec"><span class="sec-icon">⭐</span>North Star</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Where you're pointed. The ideal day serves this.</div>`;
+  ['ten','twenty','thirty'].forEach(k=>{
+    const lbl = k==='ten'?'10 years':k==='twenty'?'20 years':'30 years';
+    html += `<div class="ns-row"><div class="ns-lbl">${lbl}</div><input class="set-input" value="${esc(mem.northStar[k]||'')}" onchange="saveNorthStar('${k}',this.value)" placeholder="What does life look like?"></div>`;
+  });
+  html += `</div>`;
+
+  // Profile (for nutrition calculations)
+  const p = mem.profile || {};
+  const nut = computeNutrition();
+  html += `<h2 class="sec"><span class="sec-icon">🥩</span>Body profile</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Used to calculate your daily protein and calorie targets (Mifflin-St Jeor equation). Currently: <b>${nut.proteinTarget}g protein</b> · <b>${nut.calTarget} kcal</b> · BMR ${nut.bmr} · TDEE ${nut.tdee}</div>`;
+  html += `<div class="blk-row">
+    <input class="set-input blk-time" type="number" value="${p.bodyweight||75}" onchange="saveProfile('bodyweight',this.value)" placeholder="75">
+    <input class="set-input blk-label" type="number" value="${p.height||175}" onchange="saveProfile('height',this.value)" placeholder="175">
+  </div>
+  <div class="set-label" style="margin-top:0">Body weight (kg) · Height (cm)</div>`;
+  html += `<div class="blk-row">
+    <input class="set-input blk-time" type="number" value="${p.age||30}" onchange="saveProfile('age',this.value)" placeholder="30">
+    <select class="set-input blk-label" onchange="saveProfile('sex',this.value)">
+      <option value="male" ${p.sex==='male'?'selected':''}>Male</option>
+      <option value="female" ${p.sex==='female'?'selected':''}>Female</option>
+    </select>
+  </div>
+  <div class="set-label" style="margin-top:0">Age · Sex</div>`;
+  html += `<div class="set-label">Activity level</div>`;
+  html += `<select class="set-input" onchange="saveProfile('activity',this.value)">
+    <option value="sedentary" ${p.activity==='sedentary'?'selected':''}>Sedentary (desk, no exercise)</option>
+    <option value="light" ${p.activity==='light'?'selected':''}>Light (1–3 workouts/wk)</option>
+    <option value="moderate" ${p.activity==='moderate'?'selected':''}>Moderate (3–5 workouts/wk)</option>
+    <option value="active" ${p.activity==='active'?'selected':''}>Active (6–7 workouts/wk)</option>
+    <option value="very" ${p.activity==='very'?'selected':''}>Very active (daily + physical job)</option>
+  </select>`;
+  html += `<div class="set-label">Goal</div>`;
+  html += `<select class="set-input" onchange="saveProfile('goal',this.value)">
+    <option value="cut" ${p.goal==='cut'?'selected':''}>Cut (−400 kcal, 1.8g/kg protein)</option>
+    <option value="maintain" ${p.goal==='maintain'?'selected':''}>Maintain (TDEE, 1.6g/kg protein)</option>
+    <option value="gain" ${p.goal==='gain'?'selected':''}>Gain (+300 kcal, 2.0g/kg protein)</option>
+  </select>`;
+  html += `</div>`;
+
+  // Data
+  html += `<h2 class="sec"><span class="sec-icon">💾</span>Data</h2>`;
+  html += `<div class="glass set-card">
+    <div class="set-row">
+      <button class="set-btn" onclick="exportData()">Export JSON</button>
+      <button class="set-btn" onclick="document.getElementById('importFile').click()">Import JSON</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+    <div class="set-row" style="margin-top:16px">
+      <button class="set-btn danger" onclick="resetData()">Reset all data</button>
+    </div>
+  </div>`;
+
+  document.getElementById('tab-settings').innerHTML = html;
+  document.getElementById('tab-settings').classList.add('fade');
+  setTimeout(()=>document.getElementById('tab-settings').classList.remove('fade'),400);
+}
+
+// ===== ACTIONS: blocks =====
+function toggleBlock(id){
+  const d = dayObj(todayKey());
+  d.held[id] = !d.held[id];
+  save();
+  renderTopBar();
+  renderToday();
+}
+function editBlock(i,field,val){
+  mem.idealDay.blocks[i][field] = val;
+  save();
+}
+function delBlock(i){
+  mem.idealDay.blocks.splice(i,1);
+  save();
+  renderSettings();
+}
+function addBlock(){
+  const id = 'b'+Date.now();
+  mem.idealDay.blocks.push({ id, time:'12:00', label:'New block', holds:'' });
+  save();
+  renderSettings();
+}
+
+// ===== ACTIONS: routine =====
+function editRoutine(i,field,val){
+  mem.routine[i][field] = val;
+  save();
+}
+function delRoutine(i){
+  mem.routine.splice(i,1);
+  save();
+  renderSettings();
+}
+function addRoutine(){
+  const id = 'r'+Date.now();
+  mem.routine.push({ id, icon:'☑️', label:'New task', days:[] });
+  save();
+  renderSettings();
+}
+function toggleRoutineDay(i,di){
+  const r = mem.routine[i];
+  if(!r.days) r.days = [];
+  const idx = r.days.indexOf(di);
+  if(idx>=0) r.days.splice(idx,1);
+  else r.days.push(di);
+  r.days.sort();
+  save();
+  renderSettings();
+}
+
+// ===== ACTIONS: verdict =====
+function setVerdict(v){
+  const d = dayObj(todayKey());
+  d.verdict = (d.verdict===v) ? '' : v;
+  if(d.verdict!=='drift') d.drifts = [];
+  save();
+  renderToday();
+}
+function updateDrift(i,val){
+  const d = dayObj(todayKey());
+  d.drifts[i] = val;
+  if(!d.drifts.some(x=>x)) {} // keep verdict as drift
+  save();
+}
+function setMood(m){
+  const d = dayObj(todayKey());
+  d.mood = (d.mood===m) ? 0 : m;
+  save();
+  renderToday();
+}
+function updateNote(val){
+  const d = dayObj(todayKey());
+  d.note = val;
+  save();
+}
+
+// ===== ACTIONS: corrections =====
+function corrStreak(c, upTo){
+  const dates = (c.heldDates||[]).slice().sort();
+  if(!dates.length) return 0;
+  // count consecutive days ending at upTo (or last held date if after upTo)
+  let streak = 0;
+  let cur = new Date(upTo+'T00:00:00');
+  const heldSet = new Set(dates);
+  // if today not held, count back from last held date
+  if(!heldSet.has(dayKey(cur))){
+    cur = new Date(dates[dates.length-1]+'T00:00:00');
+  }
+  while(heldSet.has(dayKey(cur))){
+    streak++;
+    cur.setDate(cur.getDate()-1);
+  }
+  return streak;
+}
+function toggleCorrHold(id){
+  const d = dayObj(todayKey());
+  d.corrections[id] = !d.corrections[id];
+  const c = mem.queue.find(q=>q.id===id);
+  if(c){
+    if(!c.heldDates) c.heldDates = [];
+    const tk = todayKey();
+    if(d.corrections[id]){
+      if(!c.heldDates.includes(tk)) c.heldDates.push(tk);
+    } else {
+      c.heldDates = c.heldDates.filter(x=>x!==tk);
+    }
+  }
+  save();
+  renderToday();
+}
+function graduateCorr(id){
+  const c = mem.queue.find(q=>q.id===id);
+  if(!c) return;
+  c.status = 'autopilot';
+  c.graduatedDate = todayKey();
+  save();
+  renderToday();
+}
+function retireCorr(id){
+  const c = mem.queue.find(q=>q.id===id);
+  if(!c) return;
+  c.status = 'retired';
+  c.retiredDate = todayKey();
+  save();
+  renderToday();
+}
+function openAddCorr(){
+  const active = (mem.queue||[]).filter(c=>c.status==='active');
+  if(active.length >= MAX_ACTIVE) return;
+  showModal(`
+    <div class="grab"></div>
+    <h3>New correction</h3>
+    <div class="sub">Name the drift you want to fix, and the identity it serves. You'll hold it daily until it graduates to autopilot.</div>
+    <div class="field"><label>The drift / correction</label><input class="set-input" id="corrText" placeholder="e.g. No phone in bedroom after 22:00"></div>
+    <div class="field"><label>Identity line</label><input class="set-input" id="corrIdentity" placeholder="e.g. protects his sleep like it's sacred"></div>
+    <div class="actions">
+      <button class="set-btn" onclick="closeModal()">Cancel</button>
+      <button class="set-btn primary" onclick="addCorr()">Add correction</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('corrText').focus(),100);
+}
+function addCorr(){
+  const text = document.getElementById('corrText').value.trim();
+  const identityLine = document.getElementById('corrIdentity').value.trim();
+  if(!text) return;
+  const id = 'c'+Date.now();
+  mem.queue.push({ id, text, identityLine, startedDate:todayKey(), status:'active', heldDates:[] });
+  save();
+  closeModal();
+  renderToday();
+}
+function corrExistsFor(text){
+  const t = text.trim().toLowerCase();
+  return (mem.queue||[]).some(c=>c.text.trim().toLowerCase()===t && c.status!=='retired');
+}
+function makeCorrFromDrift(i){
+  const d = dayObj(todayKey());
+  const text = (d.drifts[i]||'').trim();
+  if(!text) return;
+  if(corrExistsFor(text)) return;
+  const active = (mem.queue||[]).filter(c=>c.status==='active');
+  if(active.length >= MAX_ACTIVE){
+    alert('Queue full. Graduate or retire a correction first.');
+    return;
+  }
+  const id = 'c'+Date.now();
+  mem.queue.push({ id, text, identityLine:'', startedDate:todayKey(), status:'active', heldDates:[] });
+  save();
+  renderToday();
+}
+
+// ===== ACTIONS: settings =====
+function saveIdentity(){
+  const v = document.getElementById('identityInput').value;
+  mem.identity = v.split('\n').map(s=>s.trim()).filter(s=>s);
+  save();
+  renderIdentity();
+}
+function saveNorthStar(k,val){
+  if(!mem.northStar) mem.northStar={};
+  mem.northStar[k] = val;
+  save();
+}
+function saveProfile(k,val){
+  if(!mem.profile) mem.profile={};
+  if(k==='bodyweight'||k==='height'||k==='age') val = parseFloat(val)||0;
+  mem.profile[k] = val;
+  save();
+  renderSettings();
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(mem,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ideal-day-backup-'+todayKey()+'.json';
+  a.click();
+}
+function importData(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const p = JSON.parse(r.result);
+      mem = { ...mem, ...p };
+      save();
+      renderAll();
+    }catch(err){ alert('Invalid file'); }
+  };
+  r.readAsText(f);
+}
+function resetData(){
+  if(!confirm('Reset ALL data? This cannot be undone.')) return;
+  if(!confirm('Really? Everything — ideal day, history, corrections — gone.')) return;
+  localStorage.removeItem('idealDay');
+  mem = { schema:3, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})) };
+  save();
+  renderAll();
+}
+
+// ===== MODAL =====
+function showModal(html){
+  document.getElementById('modal').innerHTML = html;
+  document.getElementById('modalBg').classList.remove('hide');
+}
+function closeModal(){
+  document.getElementById('modalBg').classList.add('hide');
+}
+
+// ===== UTIL =====
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== INIT =====
+load();
+if(!mem.onboarded){
+  document.getElementById('onboard').classList.remove('hide');
+} else {
+  document.getElementById('onboard').classList.add('hide');
+}
+renderAll();
+
+// SW
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
