@@ -408,6 +408,29 @@ h2.sec .sec-icon{font-size:13px;}
 .onboard-day .od-title{font-size:13px;font-weight:600;color:var(--text);}
 .onboard-day .od-desc{font-size:11px;color:var(--faint);margin-top:2px;}
 .onboard-day.done .od-title{text-decoration:line-through;opacity:.5;}
+
+/* ===== APPLE HEALTH SYNC ===== */
+.health-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);transition:all .25s;}
+.health-bar.synced{border-color:rgba(34,197,94,.25);background:linear-gradient(135deg,var(--card),rgba(34,197,94,.04));}
+.health-bar .hb-icon{font-size:20px;flex-shrink:0;}
+.health-bar .hb-text{flex:1;min-width:0;font-size:12px;color:var(--muted);line-height:1.4;}
+.health-bar .hb-text b{color:var(--text);}
+.health-bar .hb-chips{font-size:11px;color:var(--faint);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.health-bar .hb-btn{padding:8px 14px;border-radius:99px;border:1px solid var(--accent);background:rgba(74,126,255,.1);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;flex-shrink:0;transition:all .2s;}
+.health-bar .hb-btn:active{transform:scale(.95);}
+.hs-sugg{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r-sm);margin-bottom:6px;font-size:13px;line-height:1.4;}
+.hs-sugg.high{background:linear-gradient(135deg,rgba(255,94,58,.08),rgba(255,176,32,.05));border:1px solid rgba(255,94,58,.15);}
+.hs-sugg.med{background:linear-gradient(135deg,rgba(74,126,255,.06),rgba(20,184,166,.03));border:1px solid rgba(74,126,255,.12);}
+.hs-sugg.low{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(20,184,166,.03));border:1px solid rgba(34,197,94,.12);}
+.hs-sugg-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.hs-setup{padding:16px 18px;margin-bottom:12px;}
+.hs-setup h3{font-size:13px;font-weight:600;margin:14px 0 8px;color:var(--text);}
+.hs-setup p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+.hs-setup ol{padding-left:20px;font-size:12px;color:var(--muted);line-height:1.8;}
+.hs-setup ol li{margin-bottom:4px;}
+.hs-setup code{background:var(--surface);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);}
+.hs-action-btn{padding:10px 14px;border-radius:var(--r-xs);border:1px solid var(--line2);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.hs-action-btn:active{transform:scale(.95);}
 </style>
 </head>
 <body>
@@ -540,6 +563,7 @@ let mem = {
   antiProc: [false,false,false,false,false,false,false],
   reviews:{ weekly:{}, monthly:{}, annual:{} },
   onboardDay: 0,
+  healthSync: {},
 };
 let curTab = 'today';
 
@@ -564,6 +588,7 @@ function load(){
       if(!mem.antiProc) mem.antiProc = [false,false,false,false,false,false,false];
       if(!mem.reviews) mem.reviews = { weekly:{}, monthly:{}, annual:{} };
       if(mem.onboardDay===undefined) mem.onboardDay = 0;
+      if(!mem.healthSync) mem.healthSync = {};
       // ensure each block has a domain
       (mem.idealDay.blocks||[]).forEach(b=>{ if(!b.domain) b.domain='meta_time'; });
       // ensure each day has all fields
@@ -818,6 +843,158 @@ function computeSuggestions(){
   const order = {high:0, med:1, low:2};
   sugg.sort((a,b)=>order[a.pri]-order[b.pri]);
   return sugg.slice(0,5);
+}
+
+// ===== APPLE HEALTH SYNC (Shortcuts URL Bridge) =====
+const HEALTH_PARAMS = ['steps','sleep','hrv','weight','restingHR','workoutMin','activeCal','mindfulMin','water','screenTime','pickups'];
+
+function parseHealthURL(){
+  const params = new URLSearchParams(window.location.search);
+  const data = {};
+  let hasData = false;
+  HEALTH_PARAMS.forEach(k=>{
+    const v = params.get(k);
+    if(v!==null && !isNaN(parseFloat(v))){ data[k]=parseFloat(v); hasData=true; }
+  });
+  if(!hasData) return null;
+  data.syncedAt = new Date().toISOString();
+  data.lastSync = todayKey();
+  return data;
+}
+function applyHealthData(data){
+  if(!data) return false;
+  if(!mem.healthSync) mem.healthSync = {};
+  mem.healthSync = {...mem.healthSync, ...data};
+  const d = dayObj(todayKey());
+  // auto-fill metrics fields
+  if(data.sleep!=null) d.sleep = data.sleep;
+  if(data.hrv!=null) d.hrv = data.hrv;
+  if(data.screenTime!=null) d.screenTime = data.screenTime;
+  if(data.pickups!=null) d.pickups = data.pickups;
+  // auto-fill weight into profile
+  if(data.weight!=null && mem.profile){
+    mem.profile.bodyweight = data.weight;
+  }
+  // auto-toggle restorative if mindful minutes >= 10
+  if(data.mindfulMin && data.mindfulMin>=10 && !d.restorative){
+    d.restorative = true;
+    mem.healthSync.autoToggled = ['restorative (auto: '+data.mindfulMin+'min mindfulness)'];
+  }
+  save();
+  return true;
+}
+function healthSuggestions(){
+  const hs = mem.healthSync || {};
+  if(hs.lastSync !== todayKey()) return [];
+  const d = dayObj(todayKey());
+  const s = [];
+  // sleep-based
+  if(hs.sleep!=null){
+    if(hs.sleep<6){
+      s.push({icon:'😴',text:'Low sleep ('+hs.sleep+'h). Do lighter versions today. Protect energy.',priority:'high'});
+      s.push({icon:'🌙',text:'Tonight: phone out of bedroom by 22:00. Sleep debt is '+((7.5-hs.sleep).toFixed(1))+'h.',priority:'medium'});
+    } else if(hs.sleep>=7.5){
+      s.push({icon:'💪',text:'Great sleep ('+hs.sleep+'h). Your body is recovered — push hard today.',priority:'low'});
+    }
+  }
+  // steps-based
+  if(hs.steps!=null){
+    if(hs.steps>=8000){
+      s.push({icon:'👟',text:'You hit '+hs.steps.toLocaleString()+' steps. Movement block is done.',priority:'low'});
+    } else if(hs.steps<3000 && new Date().getHours()>=16){
+      s.push({icon:'🚶',text:'Only '+hs.steps+' steps. A 15-min walk = ~1500 steps + clears your head.',priority:'medium'});
+    }
+  }
+  // HRV-based
+  if(hs.hrv!=null){
+    if(hs.hrv<35){
+      s.push({icon:'📉',text:'HRV '+hs.hrv+'ms is low. Stress is high — prioritize recovery over intensity today.',priority:'high'});
+    } else if(hs.hrv>=50){
+      s.push({icon:'📈',text:'HRV '+hs.hrv+'ms is strong. Your nervous system is ready — go hard on deep work today.',priority:'low'});
+    }
+  }
+  // workout-based
+  if(hs.workoutMin && hs.workoutMin>=20){
+    s.push({icon:'🏋️',text:'Workout detected: '+hs.workoutMin+' min. Log your Move block as held.',priority:'high'});
+  }
+  // resting HR
+  if(hs.restingHR && hs.restingHR>70){
+    s.push({icon:'❤️',text:'Resting HR '+hs.restingHR+' bpm is elevated. Consider a lighter day.',priority:'medium'});
+  }
+  // water
+  if(hs.water && hs.water<1500){
+    s.push({icon:'💧',text:'Only '+hs.water+'ml water today. Dehydration mimics fatigue — drink a glass now.',priority:'medium'});
+  }
+  // active calories
+  if(hs.activeCal && hs.activeCal>=500){
+    s.push({icon:'🔥',text:'You burned '+hs.activeCal+' active calories. Movement block earned.',priority:'low'});
+  }
+  return s;
+}
+function renderHealthSyncBar(){
+  const hs = mem.healthSync || {};
+  const today = hs.lastSync === todayKey();
+  if(!today){
+    return `<div class="health-bar">
+      <div class="hb-icon">🍎</div>
+      <div class="hb-text">No health data today. Run the Apple Shortcut to sync.</div>
+      <button class="hb-btn" onclick="openHealthShortcut()">Sync</button>
+    </div>`;
+  }
+  const chips = [];
+  if(hs.steps!=null) chips.push('👟 '+hs.steps.toLocaleString());
+  if(hs.sleep!=null) chips.push('😴 '+hs.sleep+'h');
+  if(hs.hrv!=null) chips.push('❤️ '+hs.hrv+'ms');
+  if(hs.weight!=null) chips.push('⚖️ '+hs.weight+'kg');
+  if(hs.workoutMin) chips.push('🏋️ '+hs.workoutMin+'m');
+  if(hs.restingHR) chips.push('🫀 '+hs.restingHR+'bpm');
+  if(hs.activeCal) chips.push('🔥 '+hs.activeCal+'cal');
+  if(hs.mindfulMin) chips.push('🧘 '+hs.mindfulMin+'m');
+  if(hs.water) chips.push('💧 '+hs.water+'ml');
+  return `<div class="health-bar synced">
+    <div class="hb-icon">✅</div>
+    <div class="hb-text"><b>Health synced</b><div class="hb-chips">${chips.join(' · ')}</div></div>
+    <button class="hb-btn" onclick="openHealthShortcut()">Re-sync</button>
+  </div>`;
+}
+function renderHealthSuggestions(){
+  const sugg = healthSuggestions();
+  if(!sugg.length) return '';
+  let html = `<div style="margin-bottom:10px">`;
+  sugg.forEach(s=>{
+    const cls = s.priority==='high'?'hs-sugg high':s.priority==='medium'?'hs-sugg med':'hs-sugg low';
+    html += `<div class="${cls}"><span class="hs-sugg-icon">${s.icon}</span><span>${esc(s.text)}</span></div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+function openHealthShortcut(){
+  window.location.href = 'shortcuts://run-shortcut?name=IdealDayHealthSync';
+}
+function openShortcutsApp(){
+  window.location.href = 'shortcuts://create-shortcut';
+}
+function copyHealthURL(){
+  const base = window.location.origin + window.location.pathname;
+  const url = base + '?steps=8234&sleep=7.2&hrv=48&weight=89.5&restingHR=58&workoutMin=35&activeCal=520&mindfulMin=15&water=1800';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>{
+      alert('URL copied! Paste it into the Open URL action in your Shortcut.');
+    }).catch(()=>fallbackCopy(url));
+  } else fallbackCopy(url);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  alert('URL copied! Paste it into the Open URL action in your Shortcut.');
+}
+function testHealthData(){
+  const sample = { steps:8234, sleep:6.4, hrv:42, weight:89.5, restingHR:58, workoutMin:35, activeCal:520, mindfulMin:15, water:1800, lastSync:todayKey() };
+  applyHealthData(sample);
+  renderAll();
 }
 
 // ===== RE-ENTRY PROTOCOL =====
@@ -1199,6 +1376,10 @@ function renderToday(){
     });
     html += `</div>`;
   }
+
+  // Apple Health sync bar + suggestions
+  html += renderHealthSyncBar();
+  html += renderHealthSuggestions();
 
   // Re-entry protocol (if been away for 3+ days)
   html += renderReEntry(d);
@@ -1604,6 +1785,28 @@ function renderSettings(){
   });
   html += `</div>`;
 
+  // Apple Health sync setup
+  html += `<h2 class="sec"><span class="sec-icon">🍎</span>Apple Health sync</h2>`;
+  html += `<div class="glass hs-setup">
+    <h3>How it works</h3>
+    <p>An Apple Shortcut reads your HealthKit data (sleep, HRV, steps, workouts, resting HR, active calories, mindful minutes, water, weight) and opens this app with the data as URL parameters. The app auto-fills your metrics and generates health-based suggestions.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="hs-action-btn" onclick="testHealthData()">🧪 Test with sample data</button>
+      <button class="hs-action-btn" onclick="copyHealthURL()">📋 Copy URL template</button>
+      <button class="hs-action-btn" onclick="openShortcutsApp()">📲 Open Shortcuts app</button>
+    </div>
+    <h3>Setup (5 minutes, one time)</h3>
+    <ol>
+      <li>Tap <b>Open Shortcuts app</b> above, or open Shortcuts manually</li>
+      <li>Create a new Shortcut named <code>IdealDayHealthSync</code></li>
+      <li>Add <b>Get Health Sample</b> actions for: Steps, Sleep, HRV, Weight, Resting HR, Active Energy, Mindful Minutes, Water</li>
+      <li>Add a <b>Get Workouts</b> action and set it to total minutes today</li>
+      <li>Add an <b>Open URL</b> action — tap <b>Copy URL template</b> above and paste it in, then replace each number with the matching variable from your Health steps</li>
+      <li>Save and add the Shortcut to your home screen for daily one-tap sync</li>
+      <li>Optional: Set up a <b>Time of Day automation</b> in Shortcuts → Automation → Time of Day → 8:00 AM → Run IdealDayHealthSync. Fully automatic every morning.</li>
+    </ol>
+  </div>`;
+
   // Friction setup (Part III Phase 0)
   const f = mem.friction || {};
   html += `<h2 class="sec"><span class="sec-icon">🛡️</span>Friction setup</h2>`;
@@ -1961,7 +2164,7 @@ function resetData(){
   if(!confirm('Reset ALL data? This cannot be undone.')) return;
   if(!confirm('Really? Everything — ideal day, history, corrections — gone.')) return;
   localStorage.removeItem('idealDay');
-  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0 };
+  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0, healthSync:{} };
   save();
   renderAll();
 }
@@ -1980,6 +2183,15 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 
 // ===== INIT =====
 load();
+// Parse Apple Health data from URL if present
+const healthData = parseHealthURL();
+if(healthData){
+  applyHealthData(healthData);
+  // clean URL so it doesn't re-apply on refresh
+  if(window.history && window.history.replaceState){
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
 if(!mem.onboarded){
   document.getElementById('onboard').classList.remove('hide');
 } else {
