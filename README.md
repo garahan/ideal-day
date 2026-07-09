@@ -44,32 +44,64 @@ You hold it daily. After **7 days held**, you can **graduate it to autopilot** �
 ## Features
 
 ### Today
-- **Smart suggestions** — rule-based, derived from your data: what ideal block is NOW/next, correction streak risk, most-drifted block, protein behind pace, routine tasks pending, verdict reminder, never-miss-twice nudge. No AI — plain code.
+- **Re-entry protocol** — if you've been away 3+ days, a "Welcome back" banner appears with one easy thing to restart with. No guilt ledger, no backlog.
+- **Celebration & gratitude layer** — surfaces wins (ideal day held, 7/14-day streaks, graduations, restorative done) as prominently as drifts. Gratitude input every evening. "Celebrate as hard as you critique."
+- **Anti-procrastination checklist** — the 7-item core checklist from Part VII (offender apps, grayscale, phone-park, time-boxed day, small 3, trigger plan, evening review). Stays visible until all checked.
+- **Trigger plans** — pre-written "when X → I will Y" swaps for the scroll reflex, shown on Today and editable in Settings.
+- **Smart suggestions** — 12 rule-based triggers: NOW/next block, correction streak risk, most-drifted block, protein behind pace, routine pending, verdict reminder, never-miss-twice, low sleep, high screen time, high stress, anti-proc unchecked, biggest recurring gap. No AI — plain code.
 - **Day-quality ring** — % of ideal blocks held, with a plain-language label
-- **Ideal-day timeline** — your blocks as a vertical timeline, tap to mark held. Shows a live **NOW** pill on the current block and dims past unheld blocks.
-- **Daily routine** — household and life-admin chores (laundry, trash, dishes, cleaning, groceries, inbox, finances…) scheduled by day of week. Shows only today's tasks with a progress counter. Tap to check off.
-- **Active corrections** — up to 3 cards with identity lines, streaks, hold toggles, graduate/retire
-- **Fuel panel** — daily protein & calorie targets calculated from your body profile (Mifflin-St Jeor). Log meals from a built-in food database, track protein/calories consumed vs target, and get smart food suggestions to close the protein gap.
-- **Nightly verdict** — match/drift toggle, 1–3 named drifts (one-tap convert to correction), mood, note
+- **Ideal-day timeline** — your blocks as a vertical timeline with domain tags, tap to mark held. Shows a live **NOW** pill on the current block and dims past unheld blocks.
+- **Daily routine** — household and life-admin chores scheduled by day of week. Shows only today's tasks with a progress counter.
+- **Active corrections** — up to 3 cards with identity lines, consecutive streak + days-on-target-this-month, hold toggles, graduate/retire. Stall detection warns if stuck 2+ weeks.
+- **Fuel panel** — daily protein & calorie targets (Mifflin-St Jeor). Log meals from a built-in food database. Smart food suggestions to close the protein gap.
+- **Daily check-in** — energy (1-5), stress (1-5), sleep (h), HRV (ms), screen time (h), phone pickups, deep-work minutes, reading minutes, restorative/fun toggle, tidy reset toggle, inbox zero toggle, values-alignment check.
+- **Gap score** — nightly score (0-100) of actual day vs ideal template. Identifies biggest recurring gap to feed the correction queue.
+- **Nightly verdict** — match/drift toggle, 1–3 named drifts (one-tap convert to correction), mood, gratitude, note
 - **Identity line** — rotates daily from your statements
 
 ### History
 - **Consistency heatmap** — 12 weeks, colored by % of ideal blocks held; green = matched ideal
 - **Recent verdicts** — last 10 days with drifts and notes
 - **Graduated to autopilot** — corrections you've successfully installed
+- **Weekly review** (~10 min) — top drifts this week, active corrections status, notes for next week
+- **Monthly review** (~20 min) — domain balance this month, rebalance notes, re-check ideal-day template
+- **Annual review** (~60 min) — North Star reflection, graduations this year, gratitude
 
 ### Settings
-- **Ideal-day editor** — add/edit/remove/reorder time blocks
-- **Daily routine editor** — add/edit/remove household and life-admin tasks, schedule each by day of week (tap day chips to toggle; empty = every day)
+- **Ideal-day editor** — add/edit/remove time blocks, each tagged with a life domain
+- **Life domains** — 9 domains across 3 waves (Self/Building/Meaning/Meta). Activate waves as you grow into the system.
+- **Daily routine editor** — household and life-admin tasks, scheduled by day of week
+- **Friction setup** — offender apps, phone-park time/place, grayscale toggle (one-time setup)
+- **Trigger plans editor** — add/remove "when X → I will Y" swaps
 - **Identity statements** — "I am someone who…" lines, one per line
 - **North Star** — 10 / 20 / 30 year vision
-- **Body profile** — weight, height, age, sex, activity level, goal (cut/maintain/gain). Drives the nutrition calculations.
+- **Body profile** — weight, height, age, sex, activity level, goal. Drives nutrition calculations.
 - **Export / import** — JSON backup
 - **Reset** — double-confirmed wipe
 
+## Life domains
+
+9 domains across 3 waves, activated progressively:
+
+| Wave | Domains | When |
+|---|---|---|
+| 1 (active by default) | Self·Body, Self·Mind, Meta·Time & Attention | Day 1 |
+| 2 | Self·Play/Joy, Building·Craft, Building·Learning, Meaning·Environment | When wave 1 is a habit |
+| 3 | Building·Finance, Meaning·Character | When the system is running smoothly |
+
+Each ideal-day block is tagged with a domain. The monthly review shows domain balance so you can see which areas are getting attention and which aren't.
+
+## Queue mechanics
+
+- **Max 3 active corrections** at once — focus, don't scatter
+- **Graduation:** 10 consecutive days held OR 80% over 2 weeks → graduate to autopilot
+- **Forgiving streak:** tracks "days on target this month" not just consecutive — one miss never resets to zero
+- **Stall detection:** if a correction has no holds in 7 days and is 2+ weeks old, the system suggests shrinking it to something more atomic
+- **Identity framing:** each correction gets an identity line ("I am someone who…")
+
 ## Smart suggestions engine
 
-All suggestions are **deterministic, rule-based code** — no LLM. They're computed fresh each render from your current state:
+All suggestions are **deterministic, rule-based code** — no LLM. 12 triggers:
 
 | Suggestion | Trigger |
 |---|---|
@@ -83,6 +115,11 @@ All suggestions are **deterministic, rule-based code** — no LLM. They're compu
 | "N routine tasks pending" | After 4pm, today's routine items aren't all done |
 | "Write tonight's verdict" | After 8pm, no verdict logged |
 | "Yesterday drifted — hold one block" | Yesterday was a drift day, today has nothing held |
+| "Only Xh sleep — do Floor versions" | Sleep < 6.5h logged, before 10am |
+| "Xh screen time — over your ideal" | Screen time > 3h, after 8pm |
+| "High stress — do something restorative" | Stress ≥ 4/5, after 6pm |
+| "N anti-proc items unchecked" | Morning, checklist not complete |
+| "Biggest recurring gap: [block]" | Gap score shows a block unheld 3+ times in 14 days |
 
 ## Daily routine
 

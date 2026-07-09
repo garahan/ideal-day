@@ -301,6 +301,113 @@ h2.sec .sec-icon{font-size:13px;}
 .routine-empty{text-align:center;padding:14px;color:var(--faint);font-size:13px;line-height:1.5;}
 .routine-progress{text-align:center;font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'JetBrains Mono',monospace;}
 .routine-progress .done{color:var(--green);font-weight:700;}
+
+/* ===== DOMAINS ===== */
+.domain-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:.06em;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+.domain-tag.self_body{background:rgba(255,94,58,.12);color:var(--coral);}
+.domain-tag.self_mind{background:rgba(74,126,255,.12);color:var(--accent);}
+.domain-tag.self_play{background:rgba(251,191,36,.12);color:var(--gold);}
+.domain-tag.build_craft{background:rgba(20,184,166,.12);color:var(--teal);}
+.domain-tag.build_finance{background:rgba(34,197,94,.12);color:var(--green);}
+.domain-tag.build_learn{background:rgba(168,85,247,.12);color:#A855F7;}
+.domain-tag.mean_char{background:rgba(236,72,153,.12);color:#EC4899;}
+.domain-tag.mean_env{background:rgba(255,176,32,.12);color:var(--amber);}
+.domain-tag.meta_time{background:rgba(139,149,173,.12);color:var(--muted);}
+
+.domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px;}
+.domain-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:12px;transition:all .25s;}
+.domain-card.active{border-color:rgba(74,126,255,.3);background:linear-gradient(135deg,var(--surface),rgba(74,126,255,.04));}
+.domain-card .d-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.domain-card .d-icon{font-size:18px;}
+.domain-card .d-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.2;}
+.domain-card .d-desc{font-size:10px;color:var(--faint);line-height:1.4;}
+.domain-card .d-wave{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-top:6px;letter-spacing:.06em;}
+.domain-card:not(.active){opacity:.4;}
+
+/* ===== METRICS CHECK-IN ===== */
+.metrics{padding:16px 18px;margin-bottom:14px;}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.metric-field{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:10px 12px;}
+.metric-field .m-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:6px;}
+.metric-field .m-input{width:100%;border:none;background:transparent;color:var(--text);font-size:16px;font-family:'JetBrains Mono',monospace;font-weight:600;outline:none;}
+.metric-field .m-unit{font-size:11px;color:var(--faint);margin-left:2px;}
+.metric-toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);cursor:pointer;transition:all .2s;}
+.metric-toggle:active{transform:scale(.98);}
+.metric-toggle .mt-label{flex:1;font-size:13px;color:var(--text);}
+.metric-toggle .mt-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .25s var(--spring);}
+.metric-toggle.on .mt-check{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.metric-toggle.on .mt-label{color:var(--green);}
+
+/* ===== GAP SCORE ===== */
+.gapscore{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:14px;}
+.gapscore .gs-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;}
+.gapscore .gs-val.good{color:var(--green);}
+.gapscore .gs-val.ok{color:var(--amber);}
+.gapscore .gs-val.bad{color:var(--coral);}
+.gapscore .gs-info{flex:1;}
+.gapscore .gs-label{font-size:13px;font-weight:600;color:var(--text);}
+.gapscore .gs-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.gapscore .gs-bar{height:6px;border-radius:99px;background:var(--surface);overflow:hidden;margin-top:6px;}
+.gapscore .gs-fill{height:100%;border-radius:99px;transition:width .5s var(--ease-out);}
+
+/* ===== CELEBRATION / GRATITUDE ===== */
+.celebrate{padding:16px 18px;margin-bottom:14px;border-color:rgba(251,191,36,.2);}
+.celebrate .c-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:600;color:var(--gold);}
+.celebrate .c-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;}
+.celebrate .c-ico{font-size:18px;flex-shrink:0;}
+.celebrate .c-text{font-size:13px;color:var(--text);line-height:1.4;}
+.celebrate .c-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+.gratitude-input{width:100%;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;margin-top:8px;transition:border-color .2s;}
+.gratitude-input:focus{border-color:var(--gold);}
+
+/* ===== RE-ENTRY BANNER ===== */
+.reentry{padding:16px 18px;margin-bottom:14px;border-color:rgba(74,126,255,.25);background:linear-gradient(135deg,rgba(74,126,255,.06),rgba(20,184,166,.03));}
+.reentry .re-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.reentry .re-head .re-icon{font-size:24px;}
+.reentry .re-head .re-title{font-size:15px;font-weight:700;color:var(--accent);}
+.reentry .re-body{font-size:13px;color:var(--muted);line-height:1.5;}
+.reentry .re-action{margin-top:10px;padding:10px 16px;border-radius:99px;border:none;background:linear-gradient(135deg,var(--accent),var(--teal));color:#0B0F1A;font-weight:700;font-size:13px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:transform .2s var(--spring);}
+.reentry .re-action:active{transform:scale(.95);}
+
+/* ===== FRICTION / TRIGGER PLANS / ANTI-PROC ===== */
+.checklist{padding:16px 18px;margin-bottom:14px;}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;transition:all .2s;}
+.cl-item:active{transform:scale(.98);}
+.cl-item:last-child{border-bottom:none;}
+.cl-item .cl-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--line2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;transition:all .25s var(--spring);margin-top:1px;}
+.cl-item.done .cl-check{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.cl-item.done .cl-text{text-decoration:line-through;opacity:.45;}
+.cl-item .cl-text{font-size:13px;color:var(--text);line-height:1.4;flex:1;}
+.cl-item .cl-text b{color:var(--text);font-weight:600;}
+.cl-item .cl-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+
+.tp-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:12px 14px;margin-bottom:8px;}
+.tp-card .tp-when{font-size:11px;color:var(--coral);font-weight:600;margin-bottom:4px;}
+.tp-card .tp-then{font-size:13px;color:var(--text);}
+.tp-card .tp-del{float:right;font-size:16px;color:var(--faint);background:none;border:none;cursor:pointer;padding:0 4px;}
+.tp-card .tp-del:hover{color:var(--coral);}
+
+/* ===== REVIEWS ===== */
+.review-card{padding:16px 18px;margin-bottom:14px;}
+.review-section{margin-bottom:16px;}
+.review-section:last-child{margin-bottom:0;}
+.review-section h4{font-size:12px;font-weight:600;color:var(--accent);margin:0 0 8px;letter-spacing:.04em;}
+.review-list{font-size:13px;color:var(--text);line-height:1.6;}
+.review-list .rl-item{padding:6px 0;border-bottom:1px solid var(--line);}
+.review-list .rl-item:last-child{border-bottom:none;}
+.review-empty{font-size:12px;color:var(--faint);font-style:italic;}
+.review-textarea{width:100%;min-height:60px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'Space Grotesk',sans-serif;resize:vertical;outline:none;line-height:1.6;margin-top:6px;}
+
+/* ===== ONBOARDING 7-DAY ===== */
+.onboard-day{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+.onboard-day:last-child{border-bottom:none;}
+.onboard-day .od-num{width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--faint);flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.onboard-day.done .od-num{background:var(--green);border-color:transparent;color:#0B0F1A;}
+.onboard-day.current .od-num{background:var(--accent);border-color:transparent;color:#0B0F1A;animation:pulse 2s infinite;}
+.onboard-day .od-body{flex:1;}
+.onboard-day .od-title{font-size:13px;font-weight:600;color:var(--text);}
+.onboard-day .od-desc{font-size:11px;color:var(--faint);margin-top:2px;}
+.onboard-day.done .od-title{text-decoration:line-through;opacity:.5;}
 </style>
 </head>
 <body>
@@ -312,16 +419,19 @@ h2.sec .sec-icon{font-size:13px;}
     <h1>Ideal Day</h1>
     <p>Define your ideal day. Log whether you held it. Name the drifts. Work corrections until they graduate to autopilot.</p>
     <div class="steps">
-      <h3>How it works</h3>
-      <li>Set up your <b>ideal day template</b> — the blocks that make a perfect day</li>
-      <li>Each day, tap blocks as you <b>hold them</b> — the timeline shows what's NOW</li>
-      <li><b>Daily routine</b> — household chores (laundry, trash, dishes…) scheduled by weekday</li>
-      <li><b>Smart suggestions</b> appear based on time, your drifts, and corrections</li>
-      <li>Log meals in <b>Fuel</b> — protein/calorie targets from your body profile</li>
-      <li>Tonight, write your <b>verdict</b> — did today match? Name 1–3 drifts</li>
-      <li>Turn drifts into <b>corrections</b> — work them until they graduate</li>
+      <h3>Your first 7 days</h3>
+      <li><b>Day 1 (tonight):</b> Friction setup — offender apps off home screen, grayscale, phone-park time. Write 2-3 trigger plans.</li>
+      <li><b>Day 2:</b> Define your ideal ordinary day. Set wake/wind-down/target sleep in Settings.</li>
+      <li><b>Days 2–7:</b> Run the surface morning + night. Log metrics by glance. Check in on mood/energy. Add nothing else.</li>
+      <li><b>Day 7:</b> First look at the week's numbers. Pick correction #1 for the queue. Adjust from what actually happened.</li>
     </div>
-    <button onclick="finishOnboard()">Start</button>
+    <div class="steps" style="margin-bottom:16px">
+      <h3>The daily loop</h3>
+      <li>Morning (~2 min): open app, read suggestions, close. Go do the thing.</li>
+      <li>During day: tap blocks/chores/meals as you do them (10 sec each).</li>
+      <li>Evening (~2 min): write verdict, name drifts, make corrections, pick mood, note gratitude.</li>
+    </div>
+    <button onclick="finishOnboard()">Start Day 1</button>
   </div>
 </div>
 
@@ -353,13 +463,27 @@ h2.sec .sec-icon{font-size:13px;}
 
 <script>
 // ===== DEFAULTS =====
+// ===== DOMAINS (from Part I of the document) =====
+const DOMAINS = {
+  self_body:    { name:'Self · Body',       icon:'💪', wave:1, desc:'Sleep, cardio, strength, recovery, movement' },
+  self_mind:    { name:'Self · Mind',       icon:'🧠', wave:1, desc:'Mood, stress, focus, energy' },
+  self_play:    { name:'Self · Play/Joy',   icon:'🎨', wave:2, desc:'Novelty, hobbies, non-instrumental fun — protect, don\'t optimize' },
+  build_craft:  { name:'Building · Craft',  icon:'🔨', wave:2, desc:'Skill depth, deliberate practice, output' },
+  build_finance:{ name:'Building · Finance', icon:'💰', wave:3, desc:'Spending, saving, net-worth trajectory' },
+  build_learn:  { name:'Building · Learning',icon:'📚', wave:2, desc:'Reading, languages, skill acquisition' },
+  mean_char:    { name:'Meaning · Character',icon:'🤝', wave:3, desc:'Actions vs stated values, generosity' },
+  mean_env:     { name:'Meaning · Environment',icon:'🧹', wave:2, desc:'Physical & digital space; clutter taxes everything' },
+  meta_time:    { name:'Meta · Time & Attention',icon:'⏱️', wave:1, desc:'Where hours go vs where you want them — the master signal' },
+};
+const DEFAULT_WAVES = { 1:true, 2:false, 3:false }; // wave 1 active by default
+
 const DEFAULT_BLOCKS = [
-  { id:'b1', time:'06:00', label:'Wake + light', holds:'5 min outside, no phone first' },
-  { id:'b2', time:'06:30', label:'Move', holds:'Gym or 20 min movement' },
-  { id:'b3', time:'08:30', label:'Deep work', holds:'90 min on the thing that matters' },
-  { id:'b4', time:'13:00', label:'Build block', holds:'Ship something small' },
-  { id:'b5', time:'18:00', label:'Connect', holds:'Be fully present with family' },
-  { id:'b6', time:'21:30', label:'Wind down', holds:'Phone out of bedroom, read' },
+  { id:'b1', time:'06:00', label:'Wake + light', holds:'5 min outside, no phone first', domain:'meta_time' },
+  { id:'b2', time:'06:30', label:'Move', holds:'Gym or 20 min movement', domain:'self_body' },
+  { id:'b3', time:'08:30', label:'Deep work', holds:'90 min on the thing that matters', domain:'build_craft' },
+  { id:'b4', time:'13:00', label:'Build block', holds:'Ship something small', domain:'build_craft' },
+  { id:'b5', time:'18:00', label:'Connect', holds:'Be fully present with family', domain:'mean_char' },
+  { id:'b6', time:'21:30', label:'Wind down', holds:'Phone out of bedroom, read', domain:'self_body' },
 ];
 const DEFAULT_IDENTITY = [
   'shows up every day, even when it\'s hard',
@@ -402,7 +526,7 @@ const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 // ===== STATE =====
 let mem = {
-  schema:3, onboarded:false,
+  schema:4, onboarded:false,
   idealDay:{ blocks: DEFAULT_BLOCKS.map(b=>({...b})) },
   identity: DEFAULT_IDENTITY.slice(),
   northStar:{ ten:'', twenty:'', thirty:'' },
@@ -410,6 +534,12 @@ let mem = {
   queue:[],
   profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' },
   routine: DEFAULT_ROUTINE.map(r=>({...r})),
+  domainWaves: {...DEFAULT_WAVES},
+  friction:{ offenders:'', phonePark:'', grayscale:false, checked:false },
+  triggerPlans: [],
+  antiProc: [false,false,false,false,false,false,false],
+  reviews:{ weekly:{}, monthly:{}, annual:{} },
+  onboardDay: 0,
 };
 let curTab = 'today';
 
@@ -428,10 +558,32 @@ function load(){
       if(!mem.queue) mem.queue = [];
       if(!mem.profile) mem.profile = { bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' };
       if(!mem.routine) mem.routine = DEFAULT_ROUTINE.map(r=>({...r}));
-      // ensure each day has a meals array and routineDone
+      if(!mem.domainWaves) mem.domainWaves = {...DEFAULT_WAVES};
+      if(!mem.friction) mem.friction = { offenders:'', phonePark:'', grayscale:false, checked:false };
+      if(!mem.triggerPlans) mem.triggerPlans = [];
+      if(!mem.antiProc) mem.antiProc = [false,false,false,false,false,false,false];
+      if(!mem.reviews) mem.reviews = { weekly:{}, monthly:{}, annual:{} };
+      if(mem.onboardDay===undefined) mem.onboardDay = 0;
+      // ensure each block has a domain
+      (mem.idealDay.blocks||[]).forEach(b=>{ if(!b.domain) b.domain='meta_time'; });
+      // ensure each day has all fields
       Object.values(mem.days).forEach(dd=>{
         if(!dd.meals) dd.meals=[];
         if(!dd.routineDone) dd.routineDone={};
+        if(!dd.energy) dd.energy=0;
+        if(!dd.stress) dd.stress=0;
+        if(!dd.sleep) dd.sleep=0;
+        if(!dd.hrv) dd.hrv=0;
+        if(!dd.screenTime) dd.screenTime=0;
+        if(!dd.pickups) dd.pickups=0;
+        if(!dd.deepWork) dd.deepWork=0;
+        if(!dd.reading) dd.reading=0;
+        if(!dd.restorative) dd.restorative=false;
+        if(!dd.valuesCheck) dd.valuesCheck='';
+        if(!dd.tidyDone) dd.tidyDone=false;
+        if(!dd.inboxZero) dd.inboxZero=false;
+        if(!dd.gapScore) dd.gapScore=null;
+        if(!dd.gratitude) dd.gratitude='';
       });
     }
   }catch(e){ console.warn('load failed', e); }
@@ -446,10 +598,29 @@ function prettyDate(key){
   return d.toLocaleDateString('en-US',{ weekday:'short', month:'short', day:'numeric' });
 }
 function dayObj(key){
-  if(!mem.days[key]) mem.days[key] = { held:{}, mood:0, note:'', verdict:'', drifts:[], corrections:{}, meals:[], routineDone:{} };
-  if(!mem.days[key].meals) mem.days[key].meals = [];
-  if(!mem.days[key].routineDone) mem.days[key].routineDone = {};
-  return mem.days[key];
+  if(!mem.days[key]) mem.days[key] = {
+    held:{}, mood:0, note:'', verdict:'', drifts:[], corrections:{}, meals:[], routineDone:{},
+    energy:0, stress:0, sleep:0, hrv:0, screenTime:0, pickups:0, deepWork:0, reading:0,
+    restorative:false, valuesCheck:'', tidyDone:false, inboxZero:false, gapScore:null, gratitude:''
+  };
+  const d = mem.days[key];
+  if(!d.meals) d.meals=[];
+  if(!d.routineDone) d.routineDone={};
+  if(d.energy===undefined) d.energy=0;
+  if(d.stress===undefined) d.stress=0;
+  if(d.sleep===undefined) d.sleep=0;
+  if(d.hrv===undefined) d.hrv=0;
+  if(d.screenTime===undefined) d.screenTime=0;
+  if(d.pickups===undefined) d.pickups=0;
+  if(d.deepWork===undefined) d.deepWork=0;
+  if(d.reading===undefined) d.reading=0;
+  if(d.restorative===undefined) d.restorative=false;
+  if(d.valuesCheck===undefined) d.valuesCheck='';
+  if(d.tidyDone===undefined) d.tidyDone=false;
+  if(d.inboxZero===undefined) d.inboxZero=false;
+  if(d.gapScore===undefined) d.gapScore=null;
+  if(d.gratitude===undefined) d.gratitude='';
+  return d;
 }
 
 // ===== ONBOARD =====
@@ -615,10 +786,245 @@ function computeSuggestions(){
     sugg.push({ ico:next.icon||'🧹', text:`${rLeft} routine task${rLeft>1?'s':''} pending: ${next.label}`, meta:rItems.filter(r=>!d.routineDone[r.id]).map(r=>r.label).join(', '), pri:'med' });
   }
 
+  // 8. Low sleep last night → suggest lighter day
+  if(d.sleep > 0 && d.sleep < 6.5 && now < 10*60){
+    sugg.push({ ico:'😴', text:`Only ${d.sleep}h sleep — do Floor versions today, protect energy`, meta:'Prioritize recovery over intensity', pri:'high' });
+  }
+
+  // 9. High screen time warning
+  if(d.screenTime > 0 && d.screenTime > 3 && now >= 20*60){
+    sugg.push({ ico:'📱', text:`${d.screenTime}h screen time today — over your ideal`, meta:'Check your trigger plans. What was the cue?', pri:'med' });
+  }
+
+  // 10. High stress
+  if(d.stress >= 4 && now >= 18*60){
+    sugg.push({ ico:'😰', text:`High stress (${d.stress}/5) — do something restorative tonight`, meta:'Protect joy. The system celebrates as hard as it critiques.', pri:'med' });
+  }
+
+  // 11. Anti-procrastination checklist not done
+  const ap = mem.antiProc || [];
+  if(!ap.every(x=>x) && now >= 9*60 && now <= 12*60){
+    const undone = ap.filter(x=>!x).length;
+    sugg.push({ ico:'🛡️', text:`${undone} anti-procrastination items unchecked`, meta:'Environment before willpower. Set it up once.', pri:'med' });
+  }
+
+  // 12. Gap score suggestion
+  const gs = computeGapScore(d, blocks);
+  if(gs.biggestGap && gs.biggestGap.count >= 3 && now >= 19*60){
+    sugg.push({ ico:'📉', text:`"${gs.biggestGap.label}" is your biggest recurring gap (${gs.biggestGap.count}× lately)`, meta:'Make it a correction tonight', pri:'med' });
+  }
+
   // sort by priority
   const order = {high:0, med:1, low:2};
   sugg.sort((a,b)=>order[a.pri]-order[b.pri]);
   return sugg.slice(0,5);
+}
+
+// ===== RE-ENTRY PROTOCOL =====
+function renderReEntry(d){
+  const keys = Object.keys(mem.days).sort();
+  if(!keys.length) return '';
+  // find last day with any activity
+  const lastActive = keys.filter(k=>k < todayKey()).reverse()[0];
+  if(!lastActive) return '';
+  const last = new Date(lastActive+'T00:00:00');
+  const today = new Date(todayKey()+'T00:00:00');
+  const gapDays = Math.floor((today - last) / 86400000);
+  if(gapDays < 3) return '';
+  // find one easy thing to restart with
+  const blocks = mem.idealDay.blocks||[];
+  const easiest = blocks[0];
+  return `<div class="glass reentry">
+    <div class="re-head"><span class="re-icon">👋</span><span class="re-title">Welcome back</span></div>
+    <div class="re-body">You've been away ${gapDays} days. No guilt ledger, no backlog. Just restart with one thing today.</div>
+    ${easiest?`<button class="re-action" onclick="toggleBlock('${easiest.id}');dismissReEntry()">Start with: ${esc(easiest.label)}</button>`:''}
+  </div>`;
+}
+function dismissReEntry(){ /* just re-renders */ renderToday(); }
+
+// ===== CELEBRATION / GRATITUDE =====
+function renderCelebration(d){
+  const wins = [];
+  // graduated corrections
+  const graduated = (mem.queue||[]).filter(c=>c.status==='autopilot');
+  graduated.forEach(c=>{
+    if(c.graduatedDate && c.graduatedDate.startsWith(todayKey().slice(0,7))) {
+      wins.push({ ico:'🎓', text:`Graduated: "${c.text}"`, sub:'Moved to autopilot this month' });
+    }
+  });
+  // ideal day held
+  const blocks = mem.idealDay.blocks||[];
+  if(blocks.length && blocks.every(b=>d.held[b.id])){
+    wins.push({ ico:'✨', text:'Ideal day fully held!', sub:'Every block held today' });
+  }
+  // correction held 7+ consecutive
+  (mem.queue||[]).filter(c=>c.status==='active').forEach(c=>{
+    const s = corrStreak(c, todayKey());
+    if(s===7) wins.push({ ico:'🔥', text:`"${c.text}" — 7 day streak!`, sub:'You can graduate this now' });
+    if(s===14) wins.push({ ico:'🏆', text:`"${c.text}" — 14 day streak!`, sub:'Outstanding' });
+  });
+  // restorative done
+  if(d.restorative) wins.push({ ico:'🎨', text:'Did something restorative today', sub:'Protect joy — celebrate as hard as you critique' });
+
+  let html = '';
+  if(wins.length || d.gratitude){
+    html += `<div class="glass celebrate">
+      <div class="c-head">🎉 Wins & gratitude</div>`;
+    wins.forEach(w=>{
+      html += `<div class="c-item"><div class="c-ico">${w.ico}</div><div class="c-text">${esc(w.text)}</div><div class="c-sub">${esc(w.sub)}</div></div>`;
+    });
+    html += `<input class="gratitude-input" placeholder="One thing you're grateful for today..." value="${esc(d.gratitude)}" oninput="setGratitude(this.value)">`;
+    html += `</div>`;
+  } else {
+    html += `<div class="glass celebrate">
+      <div class="c-head">🎉 Wins & gratitude</div>
+      <input class="gratitude-input" placeholder="One thing you're grateful for today..." value="${esc(d.gratitude)}" oninput="setGratitude(this.value)">
+    </div>`;
+  }
+  return html;
+}
+function setGratitude(val){
+  const d = dayObj(todayKey());
+  d.gratitude = val;
+  save();
+}
+
+// ===== FRICTION (Today view) =====
+function renderFrictionToday(){
+  const f = mem.friction || {};
+  const plans = mem.triggerPlans || [];
+  const ap = mem.antiProc || [false,false,false,false,false,false,false];
+  const allChecked = ap.every(x=>x);
+  let html = '';
+
+  // Anti-procrastination checklist
+  if(!allChecked){
+    html += `<h2 class="sec"><span class="sec-icon">🛡️</span>Anti-procrastination checklist</h2>`;
+    html += `<div class="glass checklist">`;
+    const items = [
+      'Offender apps off home screen / web-only / timed',
+      'Grayscale bound to focus mode',
+      'Phone parked in another room during deep work & after wind-down',
+      'Day time-boxed the night before — decisions made in advance',
+      'Today\'s 3 sized so small you can\'t wriggle out',
+      'Trigger plan for the scroll reflex, rehearsed',
+      '60-second evening review, every night',
+    ];
+    items.forEach((t,i)=>{
+      html += `<div class="cl-item ${ap[i]?'done':''}" onclick="toggleAntiProc(${i})"><div class="cl-check">✓</div><div class="cl-text">${t}</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Trigger plans
+  if(plans.length){
+    html += `<h2 class="sec"><span class="sec-icon">🔄</span>Trigger plans</h2>`;
+    html += `<div class="glass" style="padding:14px 16px;margin-bottom:14px">`;
+    plans.forEach((p,i)=>{
+      html += `<div class="tp-card"><button class="tp-del" onclick="delTriggerPlan(${i})">×</button><div class="tp-when">WHEN: ${esc(p.when)}</div><div class="tp-then">→ I WILL: ${esc(p.then)}</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  return html;
+}
+function toggleAntiProc(i){
+  if(!mem.antiProc) mem.antiProc = [false,false,false,false,false,false,false];
+  mem.antiProc[i] = !mem.antiProc[i];
+  save();
+  renderToday();
+}
+function delTriggerPlan(i){
+  mem.triggerPlans.splice(i,1);
+  save();
+  renderToday();
+}
+
+// ===== GAP SCORE =====
+function computeGapScore(d, blocks){
+  if(!blocks.length) return { score:0, pct:0, biggestGap:null, gaps:[] };
+  const gaps = blocks.filter(b=>!d.held[b.id]).map(b=>({ id:b.id, label:b.label, domain:b.domain }));
+  const held = blocks.length - gaps.length;
+  const pct = held / blocks.length;
+  // score: 0 = total gap, 100 = ideal day held
+  const score = Math.round(pct * 100);
+  // biggest recurring gap: find which unheld block has been unheld most often in last 14 days
+  const gapCounts = {};
+  gaps.forEach(g=>gapCounts[g.id]=0);
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,14);
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    gaps.forEach(g=>{ if(dd.held && !dd.held[g.id]) gapCounts[g.id] = (gapCounts[g.id]||0)+1; });
+  });
+  gaps.forEach(g=>g.count = gapCounts[g.id]||0);
+  gaps.sort((a,b)=>b.count-a.count);
+  const biggestGap = gaps[0] || null;
+  return { score, pct, biggestGap, gaps };
+}
+function renderGapScore(d, blocks){
+  const gs = computeGapScore(d, blocks);
+  if(!blocks.length) return '';
+  const cls = gs.score>=80?'good':gs.score>=50?'ok':'bad';
+  const barColor = gs.score>=80?'var(--green)':gs.score>=50?'var(--amber)':'var(--coral)';
+  let sub = `${blocks.length - gs.gaps.length} of ${blocks.length} blocks held`;
+  if(gs.biggestGap && gs.biggestGap.count>=2){
+    sub += ` · biggest recurring gap: ${gs.biggestGap.label} (${gs.biggestGap.count}× lately)`;
+  }
+  return `<div class="glass gapscore">
+    <div class="gs-val ${cls}">${gs.score}</div>
+    <div class="gs-info"><div class="gs-label">Gap score</div><div class="gs-sub">${esc(sub)}</div>
+    <div class="gs-bar"><div class="gs-fill" style="width:${gs.score}%;background:${barColor}"></div></div></div>
+  </div>`;
+}
+
+// ===== METRICS CHECK-IN =====
+function renderMetrics(d){
+  const p = mem.profile || {};
+  let html = `<h2 class="sec"><span class="sec-icon">📊</span>Daily check-in</h2>`;
+  html += `<div class="glass metrics">`;
+
+  // Numeric metrics grid
+  html += `<div class="metrics-grid">`;
+  html += metricField('sleep','Sleep','h',d.sleep,0.1);
+  html += metricField('hrv','HRV','ms',d.hrv,1);
+  html += metricField('screenTime','Screen time','h',d.screenTime,0.1);
+  html += metricField('pickups','Pickups','',d.pickups,1);
+  html += metricField('deepWork','Deep work','min',d.deepWork,1);
+  html += metricField('reading','Reading','min',d.reading,1);
+  html += `</div>`;
+
+  // Energy & stress (1-5 scale)
+  html += `<div class="set-label">Energy</div>`;
+  html += `<div class="mood-row" style="margin-bottom:10px">`;
+  for(let i=1;i<=5;i++) html += `<button class="mood-btn ${d.energy===i?'sel':''}" onclick="setMetric('energy',${i})" style="font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:700">${i}</button>`;
+  html += `</div>`;
+  html += `<div class="set-label">Stress (1=calm, 5=high)</div>`;
+  html += `<div class="mood-row" style="margin-bottom:10px">`;
+  for(let i=1;i<=5;i++) html += `<button class="mood-btn ${d.stress===i?'sel':''}" onclick="setMetric('stress',${i})" style="font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:700">${i}</button>`;
+  html += `</div>`;
+
+  // Toggle metrics
+  html += `<div class="metric-toggle ${d.restorative?'on':''}" onclick="setMetric('restorative',!d.restorative)"><span class="mt-label">🎨 Did something restorative / fun today</span><div class="mt-check">✓</div></div>`;
+  html += `<div class="metric-toggle ${d.tidyDone?'on':''}" onclick="setMetric('tidyDone',!d.tidyDone)"><span class="mt-label">🧹 10-min tidy / digital reset done</span><div class="mt-check">✓</div></div>`;
+  html += `<div class="metric-toggle ${d.inboxZero?'on':''}" onclick="setMetric('inboxZero',!d.inboxZero)"><span class="mt-label">📧 Inbox at zero</span><div class="mt-check">✓</div></div>`;
+
+  // Values check
+  html += `<div class="set-label" style="margin-top:12px">Values-alignment check (one line)</div>`;
+  html += `<input class="set-input" value="${esc(d.valuesCheck)}" oninput="setMetric('valuesCheck',this.value)" placeholder="Did my actions match my stated values today?">`;
+
+  html += `</div>`;
+  return html;
+}
+function metricField(key,label,unit,val,step){
+  return `<div class="metric-field"><div class="m-label">${label}</div><input class="m-input" type="number" step="${step}" value="${val||''}" oninput="setMetric('${key}',this.value)" placeholder="0"><span class="m-unit">${unit}</span></div>`;
+}
+function setMetric(key,val){
+  const d = dayObj(todayKey());
+  if(key==='restorative'||key==='tidyDone'||key==='inboxZero') d[key] = val;
+  else if(key==='valuesCheck') d[key] = val;
+  else d[key] = parseFloat(val)||0;
+  save();
+  if(key==='restorative'||key==='tidyDone'||key==='inboxZero') renderToday();
 }
 
 // ===== NUTRITION RENDER =====
@@ -794,6 +1200,15 @@ function renderToday(){
     html += `</div>`;
   }
 
+  // Re-entry protocol (if been away for 3+ days)
+  html += renderReEntry(d);
+
+  // Celebration / gratitude layer
+  html += renderCelebration(d);
+
+  // Friction & trigger plans (show if not fully set up, or always collapsible)
+  html += renderFrictionToday();
+
   // Ideal day timeline
   html += `<h2 class="sec"><span class="sec-icon">🗓️</span>Your ideal day</h2>`;
   if(!blocks.length){
@@ -812,7 +1227,7 @@ function renderToday(){
       const cls = (held?'held ':'') + (isNow?'now ':'') + (isPast?'past ':'');
       html += `<div class="tl-block ${cls}" onclick="toggleBlock('${b.id}')">
         <div class="tl-time">${b.time}${isNow?'<span class="tl-now-pill">NOW</span>':''}</div>
-        <div class="tl-body"><div class="tl-label">${b.label}</div><div class="tl-holds">${b.holds||''}</div></div>
+        <div class="tl-body"><div class="tl-label">${b.label}${b.domain?`<span class="domain-tag ${b.domain}">${DOMAINS[b.domain]?DOMAINS[b.domain].icon:''}</span>`:''}</div><div class="tl-holds">${b.holds||''}</div></div>
         <div class="tl-check">✓</div>
       </div>`;
     });
@@ -829,16 +1244,20 @@ function renderToday(){
     active.forEach(c=>{
       const heldToday = !!d.corrections[c.id];
       const streak = corrStreak(c, tk);
-      const canGrad = streak >= GRADUATE_THRESHOLD;
+      const daysOnTarget = corrDaysOnTarget(c);
+      const canGrad = canGraduate(c, tk);
+      const stalled = isStalled(c, tk);
+      const gradLabel = canGrad?'Graduate ✓':'Graduate in '+daysToGraduate(c,tk)+'d';
       html += `<div class="corr-card ${heldToday?'held-today':''}">
         <div class="corr-head">
           <div class="corr-text">${c.text}</div>
-          <div class="corr-streak">${streak}🔥</div>
+          <div class="corr-streak">${streak}🔥 · ${daysOnTarget}/mo</div>
         </div>
         <div class="corr-identity">${c.identityLine}</div>
+        ${stalled?`<div style="font-size:11px;color:var(--coral);margin-bottom:8px;padding:6px 10px;background:rgba(255,94,58,.08);border-radius:8px">⚠ Stalled 2+ weeks — try shrinking it to something smaller and more atomic</div>`:''}
         <div class="corr-actions">
           <button class="corr-hold-btn ${heldToday?'held':''}" onclick="toggleCorrHold('${c.id}')">${heldToday?'✓ Held today':'Mark held'}</button>
-          <button class="corr-grad-btn" ${canGrad?'':'disabled'} onclick="graduateCorr('${c.id}')">${canGrad?'Graduate ✓':'Graduate in '+(GRADUATE_THRESHOLD-streak)+'d'}</button>
+          <button class="corr-grad-btn" ${canGrad?'':'disabled'} onclick="graduateCorr('${c.id}')">${gradLabel}</button>
         </div>
         <div style="margin-top:8px;text-align:right"><button class="corr-retire" onclick="retireCorr('${c.id}')">retire</button></div>
       </div>`;
@@ -852,6 +1271,12 @@ function renderToday(){
 
   // Fuel / nutrition
   html += renderNutrition(d);
+
+  // Daily metrics check-in
+  html += renderMetrics(d);
+
+  // Nightly gap score
+  html += renderGapScore(d, blocks);
 
   // Nightly verdict
   html += `<h2 class="sec"><span class="sec-icon">🌙</span>Tonight's verdict</h2>`;
@@ -947,10 +1372,125 @@ function renderHistory(){
     html += `</div>`;
   }
 
+  // Reviews
+  html += renderReviews();
+
   document.getElementById('tab-history').innerHTML = html;
   document.getElementById('tab-history').classList.add('fade');
   setTimeout(()=>document.getElementById('tab-history').classList.remove('fade'),400);
   renderHeatmap();
+}
+
+// ===== REVIEWS =====
+function renderReviews(){
+  const tk = todayKey();
+  const reviews = mem.reviews || {};
+  let html = '';
+
+  // Weekly review (~10 min)
+  html += `<h2 class="sec"><span class="sec-icon">📅</span>Weekly review · ~10 min</h2>`;
+  const lastWeek = reviews.weekly || {};
+  const weekKey = tk.slice(0,8)+'w'; // year-month-W
+  html += `<div class="glass review-card">`;
+  // drift trends from last 7 days
+  const driftCounts = {};
+  const keys = Object.keys(mem.days).sort().reverse().slice(0,7);
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    if(dd.verdict==='drift' && dd.drifts){
+      dd.drifts.filter(x=>x).forEach(dr=>{
+        driftCounts[dr] = (driftCounts[dr]||0)+1;
+      });
+    }
+  });
+  const topDrifts = Object.entries(driftCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  html += `<div class="review-section"><h4>📊 This week's top drifts</h4>`;
+  if(topDrifts.length){
+    html += `<div class="review-list">`;
+    topDrifts.forEach(([dr,count])=>{
+      html += `<div class="rl-item">↗ ${esc(dr)} (${count}×)</div>`;
+    });
+    html += `</div>`;
+  } else { html += `<div class="review-empty">No drifts logged this week.</div>`; }
+  html += `</div>`;
+
+  // corrections status
+  const active = (mem.queue||[]).filter(c=>c.status==='active');
+  html += `<div class="review-section"><h4>🎯 Active corrections</h4>`;
+  if(active.length){
+    html += `<div class="review-list">`;
+    active.forEach(c=>{
+      const s = corrStreak(c, tk);
+      const dot = corrDaysOnTarget(c);
+      html += `<div class="rl-item">${esc(c.text)} — ${s}🔥 streak, ${dot} days on target this month</div>`;
+    });
+    html += `</div>`;
+  } else { html += `<div class="review-empty">No active corrections.</div>`; }
+  html += `</div>`;
+
+  // weekly note
+  html += `<div class="review-section"><h4>📝 Notes for next week</h4>`;
+  html += `<textarea class="review-textarea" placeholder="What to adjust? Rotate the queue? Change schedule defaults?" oninput="saveReview('weekly',this.value)">${esc(lastWeek.note||'')}</textarea>`;
+  html += `</div></div>`;
+
+  // Monthly review (~20 min)
+  html += `<h2 class="sec"><span class="sec-icon">🗓️</span>Monthly review · ~20 min</h2>`;
+  const lastMonth = reviews.monthly || {};
+  html += `<div class="glass review-card">`;
+  // domain balance
+  html += `<div class="review-section"><h4>🌐 Domain balance this month</h4>`;
+  const monthPrefix = tk.slice(0,7);
+  const monthDays = Object.entries(mem.days).filter(([k])=>k.startsWith(monthPrefix));
+  const domainHeld = {};
+  monthDays.forEach(([k,dd])=>{
+    (mem.idealDay.blocks||[]).forEach(b=>{
+      if(dd.held[b.id]){
+        const dom = b.domain || 'meta_time';
+        domainHeld[dom] = (domainHeld[dom]||0)+1;
+      }
+    });
+  });
+  if(Object.keys(domainHeld).length){
+    html += `<div class="review-list">`;
+    Object.entries(domainHeld).sort((a,b)=>b[1]-a[1]).forEach(([dom,count])=>{
+      const d = DOMAINS[dom];
+      html += `<div class="rl-item">${d?d.icon:''} ${d?d.name:dom}: ${count} blocks held</div>`;
+    });
+    html += `</div>`;
+  } else { html += `<div class="review-empty">No data this month yet.</div>`; }
+  html += `</div>`;
+  html += `<div class="review-section"><h4>📝 Rebalance domains & re-check ideal-day template</h4>`;
+  html += `<textarea class="review-textarea" placeholder="Which domains need more attention? Does the ideal-day template still fit?" oninput="saveReview('monthly',this.value)">${esc(lastMonth.note||'')}</textarea>`;
+  html += `</div></div>`;
+
+  // Annual review (~60 min)
+  html += `<h2 class="sec"><span class="sec-icon">⭐</span>Annual review · ~60 min</h2>`;
+  const lastAnnual = reviews.annual || {};
+  html += `<div class="glass review-card">`;
+  html += `<div class="review-section"><h4>⭐ North Star check: am I ahead of a year ago? Am I grateful?</h4>`;
+  html += `<textarea class="review-textarea" placeholder="Reflect on the year. What changed? What did the system catch that you'd have missed? What are you grateful for?" oninput="saveReview('annual',this.value)">${esc(lastAnnual.note||'')}</textarea>`;
+  html += `</div>`;
+  // count graduations this year
+  const yearPrefix = tk.slice(0,4);
+  const yearGrads = (mem.queue||[]).filter(c=>c.status==='autopilot' && c.graduatedDate && c.graduatedDate.startsWith(yearPrefix));
+  html += `<div class="review-section"><h4>🎓 Graduations this year: ${yearGrads.length}</h4>`;
+  if(yearGrads.length){
+    html += `<div class="review-list">`;
+    yearGrads.forEach(c=>{
+      html += `<div class="rl-item">${esc(c.text)} — graduated ${c.graduatedDate}</div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+
+  return html;
+}
+function saveReview(type,val){
+  if(!mem.reviews) mem.reviews = { weekly:{}, monthly:{}, annual:{} };
+  if(!mem.reviews[type]) mem.reviews[type] = {};
+  mem.reviews[type].note = val;
+  mem.reviews[type].date = todayKey();
+  save();
 }
 
 function renderHeatmap(){
@@ -998,9 +1538,31 @@ function renderSettings(){
       <input class="set-input blk-label" value="${esc(b.label)}" onchange="editBlock(${i},'label',this.value)" placeholder="Label">
       <button class="blk-del" onclick="delBlock(${i})">×</button>
     </div>
-    <input class="set-input" style="margin-bottom:10px" value="${esc(b.holds||'')}" onchange="editBlock(${i},'holds',this.value)" placeholder="What it holds (e.g. 90 min deep work)">`;
+    <input class="set-input" style="margin-bottom:8px" value="${esc(b.holds||'')}" onchange="editBlock(${i},'holds',this.value)" placeholder="What it holds (e.g. 90 min deep work)">
+    <select class="set-input" style="margin-bottom:10px" onchange="editBlock(${i},'domain',this.value)">
+      ${Object.entries(DOMAINS).map(([k,d])=>`<option value="${k}" ${b.domain===k?'selected':''}>${d.icon} ${d.name}</option>`).join('')}
+    </select>`;
   });
   html += `<button class="set-btn full" onclick="addBlock()">+ Add block</button>`;
+  html += `</div>`;
+
+  // Domain waves
+  html += `<h2 class="sec"><span class="sec-icon">🌐</span>Life domains</h2>`;
+  html += `<div class="glass" style="padding:0;overflow:hidden"><div class="domain-grid">`;
+  Object.entries(DOMAINS).forEach(([k,d])=>{
+    const active = mem.domainWaves && mem.domainWaves[d.wave];
+    html += `<div class="domain-card ${active?'active':''}">
+      <div class="d-head"><span class="d-icon">${d.icon}</span><span class="d-name">${d.name}</span></div>
+      <div class="d-desc">${d.desc}</div>
+      <div class="d-wave">WAVE ${d.wave} · ${active?'LIVE':'dormant'}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  html += `<div style="padding:0 4px;margin-top:10px">`;
+  [1,2,3].forEach(w=>{
+    const on = mem.domainWaves && mem.domainWaves[w];
+    html += `<button class="set-btn" style="margin-right:8px" onclick="toggleWave(${w})">${on?'✓':''} Wave ${w} ${on?'active':'activate'}</button>`;
+  });
   html += `</div>`;
 
   // Daily routine editor (household + life admin)
@@ -1040,6 +1602,31 @@ function renderSettings(){
     const lbl = k==='ten'?'10 years':k==='twenty'?'20 years':'30 years';
     html += `<div class="ns-row"><div class="ns-lbl">${lbl}</div><input class="set-input" value="${esc(mem.northStar[k]||'')}" onchange="saveNorthStar('${k}',this.value)" placeholder="What does life look like?"></div>`;
   });
+  html += `</div>`;
+
+  // Friction setup (Part III Phase 0)
+  const f = mem.friction || {};
+  html += `<h2 class="sec"><span class="sec-icon">🛡️</span>Friction setup</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Set up once. Environment before willpower — make the wrong thing harder than the right thing.</div>`;
+  html += `<div class="set-label">Your 2-3 worst phone offender apps</div>`;
+  html += `<textarea class="set-textarea" placeholder="e.g. Twitter, YouTube, Reddit" oninput="saveFriction('offenders',this.value)">${esc(f.offenders||'')}</textarea>`;
+  html += `<div class="set-label">Nightly phone-park time & place</div>`;
+  html += `<input class="set-input" value="${esc(f.phonePark||'')}" oninput="saveFriction('phonePark',this.value)" placeholder="e.g. 22:30, charges in kitchen">`;
+  html += `<div class="metric-toggle ${f.grayscale?'on':''}" onclick="saveFriction('grayscale',!${f.grayscale});renderSettings()" style="margin-top:10px"><span class="mt-label">📱 Grayscale enabled (Settings → Accessibility → Color Filters)</span><div class="mt-check">✓</div></div>`;
+  html += `</div>`;
+
+  // Trigger plans
+  html += `<h2 class="sec"><span class="sec-icon">🔄</span>Trigger plans</h2>`;
+  html += `<div class="glass set-card">
+    <div class="desc">Pre-written "when X → I will Y" swaps for the scroll reflex. Reviewed weekly.</div>`;
+  (mem.triggerPlans||[]).forEach((p,i)=>{
+    html += `<div class="tp-card"><button class="tp-del" onclick="delTriggerPlanSet(${i})">×</button><div class="tp-when">WHEN: ${esc(p.when)}</div><div class="tp-then">→ I WILL: ${esc(p.then)}</div></div>`;
+  });
+  html += `<div class="set-label" style="margin-top:10px">Add new</div>`;
+  html += `<input class="set-input" id="tpWhen" placeholder="WHEN: I feel the urge to scroll..." style="margin-bottom:8px">`;
+  html += `<input class="set-input" id="tpThen" placeholder="→ I WILL: do 10 pushups / open my book / step outside">`;
+  html += `<button class="set-btn full" style="margin-top:10px" onclick="addTriggerPlan()">+ Add trigger plan</button>`;
   html += `</div>`;
 
   // Profile (for nutrition calculations)
@@ -1114,7 +1701,13 @@ function delBlock(i){
 }
 function addBlock(){
   const id = 'b'+Date.now();
-  mem.idealDay.blocks.push({ id, time:'12:00', label:'New block', holds:'' });
+  mem.idealDay.blocks.push({ id, time:'12:00', label:'New block', holds:'', domain:'meta_time' });
+  save();
+  renderSettings();
+}
+function toggleWave(w){
+  if(!mem.domainWaves) mem.domainWaves = {...DEFAULT_WAVES};
+  mem.domainWaves[w] = !mem.domainWaves[w];
   save();
   renderSettings();
 }
@@ -1189,6 +1782,44 @@ function corrStreak(c, upTo){
     cur.setDate(cur.getDate()-1);
   }
   return streak;
+}
+// Forgiving streak: days on target this month (not consecutive — one miss never resets to zero)
+function corrDaysOnTarget(c){
+  const dates = c.heldDates||[];
+  const now = new Date();
+  const ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  return dates.filter(d=>d.startsWith(ym)).length;
+}
+// Graduation check: 10 consecutive OR 80% over 2 weeks
+function canGraduate(c, upTo){
+  const cons = corrStreak(c, upTo);
+  if(cons >= 10) return true;
+  // 80% over last 14 days
+  const held = new Set(c.heldDates||[]);
+  let count = 0;
+  for(let i=0;i<14;i++){
+    const d = new Date(upTo+'T00:00:00'); d.setDate(d.getDate()-i);
+    if(held.has(dayKey(d))) count++;
+  }
+  return count/14 >= 0.8;
+}
+function daysToGraduate(c, upTo){
+  if(canGraduate(c, upTo)) return 0;
+  const cons = corrStreak(c, upTo);
+  return Math.min(10-cons, 12); // estimate
+}
+// Stall detection: correction active 2+ weeks with no holds in last 7 days
+function isStalled(c, upTo){
+  const held = new Set(c.heldDates||[]);
+  const started = c.startedDate ? new Date(c.startedDate+'T00:00:00') : new Date();
+  const ageDays = Math.floor((new Date(upTo+'T00:00:00') - started) / 86400000);
+  if(ageDays < 14) return false;
+  // no holds in last 7 days
+  for(let i=0;i<7;i++){
+    const d = new Date(upTo+'T00:00:00'); d.setDate(d.getDate()-i);
+    if(held.has(dayKey(d))) return false;
+  }
+  return true;
 }
 function toggleCorrHold(id){
   const d = dayObj(todayKey());
@@ -1287,6 +1918,25 @@ function saveProfile(k,val){
   save();
   renderSettings();
 }
+function saveFriction(k,val){
+  if(!mem.friction) mem.friction = { offenders:'', phonePark:'', grayscale:false, checked:false };
+  mem.friction[k] = val;
+  save();
+}
+function addTriggerPlan(){
+  const w = document.getElementById('tpWhen').value.trim();
+  const t = document.getElementById('tpThen').value.trim();
+  if(!w||!t) return;
+  if(!mem.triggerPlans) mem.triggerPlans = [];
+  mem.triggerPlans.push({ when:w, then:t });
+  save();
+  renderSettings();
+}
+function delTriggerPlanSet(i){
+  mem.triggerPlans.splice(i,1);
+  save();
+  renderSettings();
+}
 function exportData(){
   const blob = new Blob([JSON.stringify(mem,null,2)],{type:'application/json'});
   const a = document.createElement('a');
@@ -1311,7 +1961,7 @@ function resetData(){
   if(!confirm('Reset ALL data? This cannot be undone.')) return;
   if(!confirm('Really? Everything — ideal day, history, corrections — gone.')) return;
   localStorage.removeItem('idealDay');
-  mem = { schema:3, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})) };
+  mem = { schema:4, onboarded:true, idealDay:{blocks:DEFAULT_BLOCKS.map(b=>({...b}))}, identity:DEFAULT_IDENTITY.slice(), northStar:{ten:'',twenty:'',thirty:''}, days:{}, queue:[], profile:{ bodyweight:75, height:175, age:30, sex:'male', activity:'moderate', goal:'gain' }, routine:DEFAULT_ROUTINE.map(r=>({...r})), domainWaves:{...DEFAULT_WAVES}, friction:{ offenders:'', phonePark:'', grayscale:false, checked:false }, triggerPlans:[], antiProc:[false,false,false,false,false,false,false], reviews:{weekly:{},monthly:{},annual:{}}, onboardDay:0 };
   save();
   renderAll();
 }
