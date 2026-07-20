@@ -447,6 +447,38 @@ h2.sec .sec-icon{font-size:13px;}
 .pbi-bar{height:5px;border-radius:99px;background:var(--surface);overflow:hidden;}
 .pbi-fill{height:100%;border-radius:99px;transition:width .5s var(--ease-out);}
 
+/* ===== SPARKLINE CHARTS ===== */
+.metrics-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mc-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:10px 12px;}
+.mc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.mc-label{font-size:11px;font-weight:600;color:var(--text);}
+.mc-avg{font-size:10px;color:var(--faint);font-family:'JetBrains Mono',monospace;}
+.mc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
+.mc-latest{font-size:13px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.mc-delta{font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+
+/* ===== CORRELATION INSIGHTS ===== */
+.corr-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+.corr-item:last-child{border-bottom:none;}
+.corr-ico{font-size:18px;flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;}
+.corr-body{flex:1;min-width:0;}
+.corr-text{font-size:13px;color:var(--text);line-height:1.4;font-weight:500;}
+.corr-sub{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.4;font-style:italic;}
+
+/* ===== MOMENTUM BAR ===== */
+.momentum-bar{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:14px;}
+.mb-icon{font-size:24px;flex-shrink:0;}
+.mb-body{flex:1;}
+.mb-title{font-size:15px;font-weight:700;color:var(--text);}
+.mb-detail{font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+
+/* ===== WEEKLY SCORE ===== */
+.weekly-score{display:flex;align-items:center;gap:16px;padding:16px 18px;margin-bottom:14px;}
+.ws-grade{font-size:36px;font-weight:800;font-family:'JetBrains Mono',monospace;width:56px;height:56px;border-radius:14px;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ws-body{flex:1;}
+.ws-score{font-size:20px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.ws-detail{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
 /* ===== APPLE HEALTH SYNC ===== */
 .health-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);transition:all .25s;}
 .health-bar.synced{border-color:rgba(34,197,94,.25);background:linear-gradient(135deg,var(--card),rgba(34,197,94,.04));}
@@ -1449,11 +1481,19 @@ function renderCelebration(d){
   if(blocks.length && blocks.every(b=>d.held[b.id])){
     wins.push({ ico:'✨', text:'Ideal day fully held!', sub:'Every block held today' });
   }
-  // correction held 7+ consecutive
+  // correction held milestone streaks
   (mem.queue||[]).filter(c=>c.status==='active').forEach(c=>{
     const s = corrStreak(c, todayKey());
-    if(s===7) wins.push({ ico:'🔥', text:`"${c.text}" — 7 day streak!`, sub:'You can graduate this now' });
-    if(s===14) wins.push({ ico:'🏆', text:`"${c.text}" — 14 day streak!`, sub:'Outstanding' });
+    const milestones = {
+      7: { ico:'🔥', text:`"${c.text}" — 7 day streak!`, sub:'You can graduate this now (10 consecutive or 80% over 2 weeks)' },
+      14: { ico:'🏆', text:`"${c.text}" — 14 day streak!`, sub:'Two weeks. This is becoming who you are.' },
+      30: { ico:'⭐', text:`"${c.text}" — 30 day streak!`, sub:'A month. This is autopilot now.' },
+      60: { ico:'💎', text:`"${c.text}" — 60 day streak!`, sub:'Two months. Graduate this — it\'s installed.' },
+      90: { ico:'👑', text:`"${c.text}" — 90 day streak!`, sub:'Three months. This is identity now.' },
+      180: { ico:'🌟', text:`"${c.text}" — 180 day streak!`, sub:'Half a year. Extraordinary.' },
+      365: { ico:'🚀', text:`"${c.text}" — 365 day streak!`, sub:'A full year. This is who you are.' },
+    };
+    if(milestones[s]) wins.push(milestones[s]);
   });
   // restorative done
   if(d.restorative) wins.push({ ico:'🎨', text:'Did something restorative today', sub:'Protect joy — celebrate as hard as you critique' });
@@ -1946,6 +1986,18 @@ function renderHistory(){
     </div>`;
   }
 
+  // Momentum trend
+  html += renderMomentum();
+
+  // Weekly score
+  html += renderWeeklyScore();
+
+  // Correlation insights (brutally honest)
+  html += renderCorrelations();
+
+  // 30-day trend charts
+  html += renderMetricCharts();
+
   // Heatmap
   html += `<h2 class="sec"><span class="sec-icon">🔥</span>Consistency</h2>`;
   html += `<div class="glass" style="padding:0;overflow:hidden">`;
@@ -2012,6 +2064,307 @@ function renderHistory(){
   document.getElementById('tab-history').classList.add('fade');
   setTimeout(()=>document.getElementById('tab-history').classList.remove('fade'),400);
   renderHeatmap();
+}
+
+// ===== SPARKLINE CHARTS =====
+function sparkline(values, opts){
+  opts = opts || {};
+  const w = opts.width || 120, h = opts.height || 32;
+  if(!values.length) return '';
+  const min = opts.min !== undefined ? opts.min : Math.min(...values);
+  const max = opts.max !== undefined ? opts.max : Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v,i)=>{
+    const x = (i / Math.max(values.length-1, 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const color = opts.color || 'var(--accent)';
+  const fill = opts.fill || 'rgba(74,126,255,.1)';
+  const linePath = `M ${pts.join(' L ')}`;
+  const areaPath = `M 0,${h} L ${pts.join(' L ')} L ${w},${h} Z`;
+  const lastVal = values[values.length-1];
+  const lastX = w, lastY = h - ((lastVal - min) / range) * h;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">
+    <path d="${areaPath}" fill="${fill}" stroke="none"/>
+    <path d="${linePath}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+function metricSeries(metric, days){
+  days = days || 30;
+  const keys = Object.keys(mem.days).sort().reverse().slice(0, days).reverse();
+  return keys.map(k=>{
+    const dd = mem.days[k];
+    return dd && dd[metric] ? dd[metric] : 0;
+  }).filter(v=>v > 0);
+}
+function renderMetricCharts(){
+  if(isColdStart()) return '';
+  const metrics = [
+    { key:'sleep',     label:'Sleep',      unit:'h',   color:'var(--accent)',  fill:'rgba(74,126,255,.1)',  good:'high' },
+    { key:'hrv',       label:'HRV',        unit:'ms',  color:'var(--teal)',    fill:'rgba(20,184,166,.1)',  good:'high' },
+    { key:'energy',    label:'Energy',     unit:'/5',  color:'var(--green)',   fill:'rgba(34,197,94,.1)',   good:'high' },
+    { key:'stress',    label:'Stress',     unit:'/5',  color:'var(--coral)',   fill:'rgba(255,94,58,.1)',   good:'low'  },
+    { key:'screenTime',label:'Screen time',unit:'h',   color:'var(--amber)',   fill:'rgba(255,176,32,.1)',  good:'low'  },
+    { key:'pickups',   label:'Pickups',    unit:'',    color:'var(--coral)',   fill:'rgba(255,94,58,.1)',   good:'low'  },
+    { key:'deepWork',  label:'Deep work',  unit:'min', color:'var(--accent)',  fill:'rgba(74,126,255,.1)',  good:'high' },
+    { key:'reading',   label:'Reading',    unit:'min', color:'var(--teal)',    fill:'rgba(20,184,166,.1)',  good:'high' },
+    { key:'mood',      label:'Mood',       unit:'/5',  color:'var(--gold)',    fill:'rgba(251,191,36,.1)',  good:'high' },
+  ];
+  let html = `<h2 class="sec"><span class="sec-icon">📈</span>30-day trends</h2>`;
+  html += `<div class="glass" style="padding:14px 16px">`;
+  html += `<div class="metrics-chart-grid">`;
+  metrics.forEach(m=>{
+    const vals = metricSeries(m.key, 30);
+    if(vals.length < 2) return; // need at least 2 points
+    const avg = vals.reduce((s,v)=>s+v, 0) / vals.length;
+    const latest = vals[vals.length-1];
+    const prev = vals[vals.length-2] || latest;
+    const delta = latest - prev;
+    const deltaStr = delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1);
+    const deltaColor = (m.good === 'high' ? delta > 0 : delta < 0) ? 'var(--green)' : 'var(--coral)';
+    const avgStr = m.key === 'mood' || m.key === 'energy' || m.key === 'stress' ? avg.toFixed(1) : Math.round(avg);
+    html += `<div class="mc-item">
+      <div class="mc-head">
+        <span class="mc-label">${m.label}</span>
+        <span class="mc-avg">avg ${avgStr}${m.unit}</span>
+      </div>
+      ${sparkline(vals, { color:m.color, fill:m.fill, width:100, height:28 })}
+      <div class="mc-foot">
+        <span class="mc-latest">${latest.toFixed(m.key==='mood'||m.key==='energy'||m.key==='stress'?1:0)}${m.unit}</span>
+        <span class="mc-delta" style="color:${deltaColor}">${deltaStr}${m.unit}</span>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// ===== CORRELATION ENGINE (brutally honest insights) =====
+function computeCorrelations(){
+  if(isColdStart()) return [];
+  const keys = Object.keys(mem.days).sort().reverse().slice(0, 30);
+  if(keys.length < 10) return []; // need at least 10 days
+  const insights = [];
+  const blocks = mem.idealDay.blocks || [];
+
+  // 1. Sleep vs drift rate
+  const lowSleepDays = keys.filter(k=>{ const d=mem.days[k]; return d.sleep && d.sleep < 6; });
+  const goodSleepDays = keys.filter(k=>{ const d=mem.days[k]; return d.sleep && d.sleep >= 7; });
+  if(lowSleepDays.length >= 3 && goodSleepDays.length >= 3){
+    const lowDriftRate = lowSleepDays.filter(k=>mem.days[k].verdict==='drift').length / lowSleepDays.length;
+    const goodDriftRate = goodSleepDays.filter(k=>mem.days[k].verdict==='drift').length / goodSleepDays.length;
+    if(lowDriftRate > goodDriftRate + 0.15){
+      insights.push({
+        ico:'😴',
+        text:`On days you sleep <6h, your drift rate is ${(lowDriftRate/goodDriftRate).toFixed(1)}x higher (${Math.round(lowDriftRate*100)}% vs ${Math.round(goodDriftRate*100)}%)`,
+        sub:'Sleep is your highest-leverage input. Protecting it protects everything else.',
+        pri:'high',
+      });
+    }
+  }
+
+  // 2. Screen time vs drift rate
+  const highScreenDays = keys.filter(k=>{ const d=mem.days[k]; return d.screenTime && d.screenTime > 4; });
+  const lowScreenDays = keys.filter(k=>{ const d=mem.days[k]; return d.screenTime && d.screenTime > 0 && d.screenTime < 2; });
+  if(highScreenDays.length >= 3 && lowScreenDays.length >= 3){
+    const highDrift = highScreenDays.filter(k=>mem.days[k].verdict==='drift').length / highScreenDays.length;
+    const lowDrift = lowScreenDays.filter(k=>mem.days[k].verdict==='drift').length / lowScreenDays.length;
+    if(highDrift > lowDrift + 0.15){
+      insights.push({
+        ico:'📱',
+        text:`On days with >4h screen time, you drift ${Math.round(highDrift*100)}% vs ${Math.round(lowDrift*100)}% on low-screen days`,
+        sub:'Screen time is eating your day. Check your friction setup and trigger plans.',
+        pri:'high',
+      });
+    }
+  }
+
+  // 3. Deep work vs mood
+  const deepWorkDays = keys.filter(k=>{ const d=mem.days[k]; return d.deepWork && d.deepWork >= 60 && d.mood > 0; });
+  const noDeepWorkDays = keys.filter(k=>{ const d=mem.days[k]; return (!d.deepWork || d.deepWork < 15) && d.mood > 0; });
+  if(deepWorkDays.length >= 3 && noDeepWorkDays.length >= 3){
+    const dwMood = deepWorkDays.reduce((s,k)=>s+mem.days[k].mood,0) / deepWorkDays.length;
+    const ndwMood = noDeepWorkDays.reduce((s,k)=>s+mem.days[k].mood,0) / noDeepWorkDays.length;
+    if(dwMood > ndwMood + 0.5){
+      insights.push({
+        ico:'🔨',
+        text:`Your mood is ${dwMood.toFixed(1)}/5 on deep-work days vs ${ndwMood.toFixed(1)}/5 on days without it`,
+        sub:'Deep work isn\'t just productive — it makes you feel better. This is the case for protecting it.',
+        pri:'med',
+      });
+    }
+  }
+
+  // 4. Best day of week
+  const dayHoldRates = {};
+  const dayCounts = {};
+  keys.forEach(k=>{
+    const d = new Date(k+'T00:00:00');
+    const dow = d.getDay();
+    const dd = mem.days[k];
+    const held = blocks.filter(b=>dd.held[b.id]).length;
+    dayHoldRates[dow] = (dayHoldRates[dow]||0) + (blocks.length ? held/blocks.length : 0);
+    dayCounts[dow] = (dayCounts[dow]||0) + 1;
+  });
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  let bestDay = -1, bestRate = 0, worstDay = -1, worstRate = 1;
+  for(let i=0;i<7;i++){
+    if(dayCounts[i] >= 2){
+      const rate = dayHoldRates[i] / dayCounts[i];
+      if(rate > bestRate){ bestRate = rate; bestDay = i; }
+      if(rate < worstRate){ worstRate = rate; worstDay = i; }
+    }
+  }
+  if(bestDay >= 0 && worstDay >= 0 && bestDay !== worstDay && bestRate > worstRate + 0.2){
+    insights.push({
+      ico:'📅',
+      text:`${dayNames[bestDay]} is your best day (${Math.round(bestRate*100)}% held) — ${dayNames[worstDay]} is your worst (${Math.round(worstRate*100)}%)`,
+      sub:`What's different about ${dayNames[worstDay]}? Schedule, energy, or something else?`,
+      pri:'med',
+    });
+  }
+
+  // 5. HRV vs energy
+  const lowHrvDays = keys.filter(k=>{ const d=mem.days[k]; return d.hrv && d.hrv > 0 && d.energy > 0; });
+  if(lowHrvDays.length >= 5){
+    const sorted = lowHrvDays.map(k=>({ hrv: mem.days[k].hrv, energy: mem.days[k].energy })).sort((a,b)=>a.hrv-b.hrv);
+    const bottomThird = sorted.slice(0, Math.floor(sorted.length/3));
+    const topThird = sorted.slice(-Math.floor(sorted.length/3));
+    const lowHrvEnergy = bottomThird.reduce((s,d)=>s+d.energy,0) / bottomThird.length;
+    const highHrvEnergy = topThird.reduce((s,d)=>s+d.energy,0) / topThird.length;
+    if(highHrvEnergy > lowHrvEnergy + 0.5){
+      insights.push({
+        ico:'❤️',
+        text:`Your energy is ${highHrvEnergy.toFixed(1)}/5 on high-HRV days vs ${lowHrvEnergy.toFixed(1)}/5 on low-HRV days`,
+        sub:'HRV is your recovery signal. Low HRV days = protect energy, don\'t push.',
+        pri:'med',
+      });
+    }
+  }
+
+  // 6. Restorative vs stress
+  const restDays = keys.filter(k=>{ const d=mem.days[k]; return d.restorative && d.stress > 0; });
+  const noRestDays = keys.filter(k=>{ const d=mem.days[k]; return !d.restorative && d.stress > 0; });
+  if(restDays.length >= 3 && noRestDays.length >= 3){
+    const restStress = restDays.reduce((s,k)=>s+mem.days[k].stress,0) / restDays.length;
+    const noRestStress = noRestDays.reduce((s,k)=>s+mem.days[k].stress,0) / noRestDays.length;
+    if(noRestStress > restStress + 0.3){
+      insights.push({
+        ico:'🎨',
+        text:`Your stress is ${noRestStress.toFixed(1)}/5 without restorative time vs ${restStress.toFixed(1)}/5 with it`,
+        sub:'Rest and joy aren\'t luxuries — they\'re stress medicine. This is why the system protects them.',
+        pri:'med',
+      });
+    }
+  }
+
+  return insights;
+}
+function renderCorrelations(){
+  const insights = computeCorrelations();
+  if(!insights.length) return '';
+  let html = `<h2 class="sec"><span class="sec-icon">🧠</span>What your data says about you</h2>`;
+  html += `<div class="glass" style="padding:14px 16px">`;
+  insights.forEach(ins=>{
+    html += `<div class="corr-item">
+      <div class="corr-ico">${ins.ico}</div>
+      <div class="corr-body">
+        <div class="corr-text">${esc(ins.text)}</div>
+        <div class="corr-sub">${esc(ins.sub)}</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ===== MOMENTUM TREND =====
+function computeMomentum(){
+  const blocks = mem.idealDay.blocks || [];
+  if(!blocks.length) return null;
+  const keys = Object.keys(mem.days).sort();
+  if(keys.length < 14) return null;
+  // last 30 days vs previous 30 days
+  const recent = keys.slice(-30);
+  const previous = keys.slice(-60, -30);
+  if(!previous.length) return null;
+  const calcRate = (arr)=>{
+    if(!arr.length) return 0;
+    let held = 0, total = 0;
+    arr.forEach(k=>{
+      const dd = mem.days[k];
+      total++;
+      held += blocks.filter(b=>dd.held[b.id]).length / blocks.length;
+    });
+    return total ? held/total : 0;
+  };
+  const recentRate = calcRate(recent);
+  const prevRate = calcRate(previous);
+  const delta = recentRate - prevRate;
+  return {
+    recent: recentRate,
+    previous: prevRate,
+    delta: delta,
+    direction: delta > 0.03 ? 'up' : delta < -0.03 ? 'down' : 'flat',
+    recentDays: recent.length,
+    prevDays: previous.length,
+  };
+}
+function renderMomentum(){
+  const m = computeMomentum();
+  if(!m) return '';
+  const pct = Math.round(m.recent * 100);
+  const prevPct = Math.round(m.previous * 100);
+  const deltaPct = Math.round(m.delta * 100);
+  const dirIcon = m.direction === 'up' ? '📈' : m.direction === 'down' ? '📉' : '➡️';
+  const dirText = m.direction === 'up' ? 'getting better' : m.direction === 'down' ? 'slipping' : 'stable';
+  const dirColor = m.direction === 'up' ? 'var(--green)' : m.direction === 'down' ? 'var(--coral)' : 'var(--muted)';
+  return `<div class="glass momentum-bar">
+    <div class="mb-icon">${dirIcon}</div>
+    <div class="mb-body">
+      <div class="mb-title">Momentum: <span style="color:${dirColor}">${dirText}</span></div>
+      <div class="mb-detail">Last 30 days: ${pct}% held · Previous 30: ${prevPct}% · ${deltaPct > 0 ? '+' : ''}${deltaPct}% change</div>
+    </div>
+  </div>`;
+}
+
+// ===== WEEKLY SCORE =====
+function computeWeeklyScore(){
+  const keys = Object.keys(mem.days).sort().reverse().slice(0, 7);
+  if(keys.length < 3) return null;
+  const blocks = mem.idealDay.blocks || [];
+  let totalHeld = 0, totalBlocks = 0, driftCount = 0, corrHeld = 0;
+  keys.forEach(k=>{
+    const dd = mem.days[k];
+    totalBlocks += blocks.length;
+    totalHeld += blocks.filter(b=>dd.held[b.id]).length;
+    if(dd.verdict === 'drift') driftCount++;
+    if(dd.corrections){
+      corrHeld += Object.values(dd.corrections).filter(x=>x).length;
+    }
+  });
+  const holdRate = totalBlocks ? totalHeld / totalBlocks : 0;
+  const driftRate = driftCount / keys.length;
+  // Score: hold rate * 70 + low drift * 20 + corrections * 10
+  const score = holdRate * 70 + (1 - driftRate) * 20 + Math.min(corrHeld / 7, 1) * 10;
+  const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+  const gradeColor = score >= 80 ? 'var(--green)' : score >= 70 ? 'var(--amber)' : 'var(--coral)';
+  return { score: Math.round(score), grade, gradeColor, holdRate, driftCount, corrHeld, days: keys.length };
+}
+function renderWeeklyScore(){
+  const ws = computeWeeklyScore();
+  if(!ws) return '';
+  let html = `<h2 class="sec"><span class="sec-icon">📋</span>This week's score</h2>`;
+  html += `<div class="glass weekly-score">`;
+  html += `<div class="ws-grade" style="color:${ws.gradeColor};border-color:${ws.gradeColor}">${ws.grade}</div>`;
+  html += `<div class="ws-body">
+    <div class="ws-score">${ws.score}/100</div>
+    <div class="ws-detail">${Math.round(ws.holdRate*100)}% blocks held · ${ws.driftCount} drift day${ws.driftCount!==1?'s':''} · ${ws.corrHeld} corrections held</div>
+  </div>`;
+  html += `</div>`;
+  return html;
 }
 
 // ===== PROCRASTINATION PATTERNS (History tab) =====
@@ -2397,6 +2750,7 @@ function renderSettings(){
 function toggleBlock(id){
   const d = dayObj(viewKey());
   d.held[id] = !d.held[id];
+  haptic(d.held[id] ? 'light' : 'light');
   save();
   renderTopBar();
   renderToday();
@@ -2552,8 +2906,18 @@ function toggleCorrHold(id){
     const tk = todayKey();
     if(d.corrections[id]){
       if(!c.heldDates.includes(tk)) c.heldDates.push(tk);
+      // check for streak milestone
+      const oldStreak = corrStreak(c, tk) - 1;
+      const newStreak = corrStreak(c, tk);
+      const milestone = checkStreakMilestone(c, oldStreak, newStreak);
+      if(milestone){
+        haptic('celebration');
+      } else {
+        haptic('success');
+      }
     } else {
       c.heldDates = c.heldDates.filter(x=>x!==tk);
+      haptic('light');
     }
   }
   save();
@@ -2564,6 +2928,7 @@ function graduateCorr(id){
   if(!c) return;
   c.status = 'autopilot';
   c.graduatedDate = todayKey();
+  haptic('celebration');
   save();
   renderToday();
 }
@@ -2716,6 +3081,25 @@ function showModal(html){
 }
 function closeModal(){
   document.getElementById('modalBg').classList.add('hide');
+}
+
+// ===== HAPTIC FEEDBACK =====
+function haptic(pattern){
+  // pattern: 'light' (10ms), 'medium' (20ms), 'success' (10,30,10), 'celebration' (10,50,10,50,10,50,20)
+  if(!navigator.vibrate) return;
+  const patterns = {
+    light: 10,
+    medium: 20,
+    success: [10, 30, 10],
+    celebration: [10, 50, 10, 50, 10, 50, 20],
+  };
+  navigator.vibrate(patterns[pattern] || 10);
+}
+
+// ===== STREAK MILESTONE CHECK =====
+function checkStreakMilestone(c, oldStreak, newStreak){
+  const milestones = [7, 14, 30, 60, 90, 180, 365];
+  return milestones.find(m => oldStreak < m && newStreak >= m);
 }
 
 // ===== UTIL =====
